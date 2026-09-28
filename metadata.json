@@ -1,0 +1,6 @@
+{
+  "name": "Solux Green - Sistema de Gestión Solar y CRM",
+  "description": "Plataforma integral de gestión de proyectos solares, cotizaciones fotovoltaicas, pipeline CRM de prospectos, expediente digital y administración de personal y partners.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,705 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Sun, Zap, ShieldCheck, Award, Smartphone, CheckCircle2, 
+  ArrowRight, Phone, Mail, MapPin, MessageSquare, ChevronDown, 
+  ChevronUp, ExternalLink, Settings, ArrowLeft, ChevronLeft, 
+  ChevronRight, Sparkles, FileText, Clock, Wrench, Cpu, 
+  TrendingDown, DollarSign, Layers, Check
+} from 'lucide-react';
+import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
+import { SOLUX_LOGO_FALLBACK } from '../logoConfig';
+
+interface LandingPageViewProps {
+  config: LandingConfig;
+  onNavigateToAdmin?: () => void;
+  onNavigateToPortal?: () => void;
+}
+
+export default function LandingPageView({
+  config,
+  onNavigateToAdmin,
+  onNavigateToPortal
+}: LandingPageViewProps) {
+  // Slider State
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const slides = config.heroSlides && config.heroSlides.length > 0 ? config.heroSlides : [];
+
+  // FAQ Accordion State
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(config.faqs?.[0]?.id || null);
+
+  // Auto-play for Hero Slider
+  useEffect(() => {
+    if (!config.sliderAutoPlay || slides.length <= 1) return;
+    const intervalTime = (config.sliderIntervalSec || 6) * 1000;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex(prev => (prev + 1) % slides.length);
+    }, intervalTime);
+    return () => clearInterval(timer);
+  }, [config.sliderAutoPlay, config.sliderIntervalSec, slides.length]);
+
+  const handleNextSlide = () => {
+    if (slides.length > 0) {
+      setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    if (slides.length > 0) {
+      setCurrentSlideIndex((prev) => (prev - 1 + slides.length) % slides.length);
+    }
+  };
+
+  // Helper to build WhatsApp URL with pre-filled message
+  const getCleanWhatsappUrl = (customText?: string) => {
+    const rawNum = config.contactWhatsapp.replace(/\D/g, '');
+    const cleanNum = rawNum.startsWith('52') ? rawNum : (rawNum.length === 10 ? `521${rawNum}` : `52${rawNum}`);
+    const textToEncode = customText || config.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares';
+    return `https://wa.me/${cleanNum}?text=${encodeURIComponent(textToEncode)}`;
+  };
+
+  // Typography font class
+  const getFontFamilyClass = () => {
+    switch (config.styles?.fontFamily) {
+      case 'inter': return 'font-sans';
+      case 'poppins': return 'font-sans tracking-wide';
+      case 'serif': return 'font-serif';
+      case 'mono': return 'font-mono';
+      default: return 'font-sans';
+    }
+  };
+
+  // Text alignment class
+  const getTextAlignClass = () => {
+    switch (config.styles?.textAlign) {
+      case 'center': return 'text-center';
+      case 'justify': return 'text-justify';
+      default: return 'text-left';
+    }
+  };
+
+  const currentSlide = slides[currentSlideIndex] || slides[0];
+
+  return (
+    <div 
+      className={`min-h-screen text-slate-900 bg-white selection:bg-emerald-500 selection:text-white ${getFontFamilyClass()} relative overflow-x-hidden`}
+      id="solux-landing-page"
+    >
+      {/* ========================================================================= */}
+      {/* 1. TOP ANNOUNCEMENT & ADMIN NAVIGATION QUICK BAR                           */}
+      {/* ========================================================================= */}
+      <div className="bg-slate-950 text-slate-300 text-xs py-2 px-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2 z-50 relative">
+        <div className="flex items-center gap-3 text-[11px] font-semibold">
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Ahorro Inteligente de Energía en México</span>
+          </span>
+          <span className="hidden md:inline text-slate-600">•</span>
+          <span className="hidden md:flex items-center gap-1 text-slate-300">
+            <Phone className="w-3 h-3 text-emerald-400" />
+            <span>{config.contactPhone || '229 323 3633'}</span>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {onNavigateToAdmin && (
+            <button
+              onClick={onNavigateToAdmin}
+              className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+              title="Ir al Panel de Edición de la Landing Page"
+            >
+              <Settings className="w-3 h-3" />
+              <span>Admin Landing</span>
+            </button>
+          )}
+
+          {onNavigateToPortal && (
+            <button
+              onClick={onNavigateToPortal}
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border border-slate-700"
+              title="Volver al Portal Multi-Rol de Solux Green"
+            >
+              <ArrowLeft className="w-3 h-3 text-emerald-400" />
+              <span>Portal Multi-Rol</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 1. BARRA DE NAVEGACIÓN (HEADER)                                           */}
+      {/* ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          
+          {/* Logotipo */}
+          <div className="flex items-center gap-3">
+            <a href="#hero" className="flex items-center gap-2.5 group">
+              <img 
+                src={config.logoUrl} 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = SOLUX_LOGO_FALLBACK;
+                }}
+                alt={config.brandName || "Solux Green"} 
+                className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+              />
+            </a>
+          </div>
+
+          {/* Menú de Navegación Principal */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {config.headerMenuItems.map((item) => (
+              <a
+                key={item.id}
+                href={item.href}
+                className="text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors tracking-tight"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Botón Directo: Cotizar por WhatsApp */}
+          <div className="flex items-center gap-3">
+            <a
+              href={getCleanWhatsappUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+              className="px-4 sm:px-5 py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4 fill-white" />
+              <span className="hidden sm:inline">{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
+              <span className="sm:hidden">WhatsApp</span>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 2. SECCIÓN HERO (SLIDER DE IMÁGENES / HERO BANNER)                        */}
+      {/* ========================================================================= */}
+      <section 
+        id="hero" 
+        className="relative min-h-[580px] lg:min-h-[680px] flex items-center overflow-hidden transition-colors"
+        style={{ backgroundColor: config.styles?.heroBgColor || '#0f172a' }}
+      >
+        {/* Background Image Slides with AnimatePresence */}
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="wait">
+            {currentSlide && (
+              <motion.div
+                key={currentSlide.id || currentSlideIndex}
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                className="absolute inset-0"
+              >
+                <img 
+                  src={currentSlide.imageUrl} 
+                  alt={currentSlide.alt || "Paneles Solares Solux Green"} 
+                  className="w-full h-full object-cover object-center"
+                />
+                {/* Modern Dark Gradient Overlay for Readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/75 to-slate-950/40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Hero Content Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24 relative z-10 w-full text-white">
+          <div className="max-w-2xl space-y-6">
+            
+            {/* Badge / Etiqueta superior */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 backdrop-blur-md"
+            >
+              <Zap className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs sm:text-sm font-extrabold tracking-wide uppercase">
+                {currentSlide?.badge || config.heroBadge || 'Ahorra hasta un 98% en tu recibo de CFE'}
+              </span>
+            </motion.div>
+
+            {/* Titular Principal (H1) */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-sm"
+            >
+              {currentSlide?.title || config.heroTitle}
+            </motion.h1>
+
+            {/* Subtítulo */}
+            <motion.p 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className={`text-base sm:text-lg text-slate-200 font-medium leading-relaxed max-w-xl ${getTextAlignClass()}`}
+            >
+              {currentSlide?.subtitle || config.heroSubtitle}
+            </motion.p>
+
+            {/* Llamado a la Acción (CTA Principal) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
+            >
+              <a
+                href={config.heroCtaLink || getCleanWhatsappUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
+                className="px-8 py-4 text-white rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
+              >
+                <span>{config.heroCtaText || '👉 Solicitar Cotización Gratis por WhatsApp'}</span>
+              </a>
+            </motion.div>
+
+            {/* Texto de confianza */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 font-semibold"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{config.heroTrustText || 'Asesoría técnica sin costo • Respuesta en menos de 15 minutos'}</span>
+            </motion.div>
+
+          </div>
+        </div>
+
+        {/* Slider Controls (if multiple slides exist) */}
+        {slides.length > 1 && (
+          <>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50">
+              {slides.map((_, idx) => (
+                <button
+                  key={`dot_${idx}`}
+                  onClick={() => setCurrentSlideIndex(idx)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    currentSlideIndex === idx ? 'w-8 bg-emerald-400' : 'w-2 bg-white/40 hover:bg-white/70'
+                  }`}
+                  aria-label={`Ir a diapositiva ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handlePrevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-900/40 hover:bg-slate-900/70 border border-white/20 text-white backdrop-blur-md transition-all cursor-pointer hidden md:flex items-center justify-center"
+              aria-label="Diapositiva anterior"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <button
+              onClick={handleNextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-900/40 hover:bg-slate-900/70 border border-white/20 text-white backdrop-blur-md transition-all cursor-pointer hidden md:flex items-center justify-center"
+              aria-label="Diapositiva siguiente"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 3. BARRA DE ESTADÍSTICAS Y CONFIANZA (SOCIAL PROOF)                       */}
+      {/* ========================================================================= */}
+      <section 
+        className="py-12 border-y border-slate-800 text-white relative z-10 transition-colors"
+        style={{ backgroundColor: config.styles?.statsBgColor || '#1e293b' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {config.stats.map((stat) => (
+              <div 
+                key={stat.id} 
+                className="flex flex-col items-center text-center p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-500/40 transition-colors"
+              >
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-400 tracking-tight mb-1 font-mono">
+                  {stat.value}
+                </div>
+                <div className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white">
+                  {stat.label}
+                </div>
+                {stat.description && (
+                  <div className="text-[11px] text-slate-300 font-medium mt-1 leading-snug">
+                    {stat.description}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 4. BENEFICIOS CLAVE: ¿POR QUÉ INSTALAR PANELES CON SOLUX GREEN?          */}
+      {/* ========================================================================= */}
+      <section 
+        id="beneficios" 
+        className="py-20 lg:py-28 transition-colors"
+        style={{ backgroundColor: config.styles?.benefitsBgColor || '#f8fafc' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-3.5 py-1 rounded-full inline-block">
+              Máximo Rendimiento & Ahorro
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
+              {config.benefitsTitle || '¿Por qué instalar paneles con Solux Green?'}
+            </h2>
+            <p className={`text-base text-slate-600 font-medium max-w-2xl mx-auto ${getTextAlignClass()}`}>
+              {config.benefitsSubtitle || 'Energía limpia, protección frente a aumentos tarifarios y el mejor retorno de inversión garantizado.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+            {config.benefits.map((benefit, idx) => (
+              <motion.div
+                key={benefit.id}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-lg shadow-slate-100 flex flex-col justify-between overflow-hidden relative group"
+              >
+                {/* Image if provided */}
+                {benefit.imageUrl && (
+                  <div className="h-44 sm:h-52 w-full rounded-2xl overflow-hidden mb-6 relative">
+                    <img 
+                      src={benefit.imageUrl} 
+                      alt={benefit.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+                    <div className="absolute bottom-3 left-3 bg-emerald-600/90 text-white font-mono text-xs font-bold px-2.5 py-1 rounded-lg backdrop-blur-xs">
+                      Solux Tier-1 #0{idx + 1}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xl mb-2">
+                    {idx === 0 && <TrendingDown className="w-6 h-6" />}
+                    {idx === 1 && <CheckCircle2 className="w-6 h-6" />}
+                    {idx === 2 && <Cpu className="w-6 h-6" />}
+                    {idx === 3 && <DollarSign className="w-6 h-6" />}
+                    {idx > 3 && <Sparkles className="w-6 h-6" />}
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    {benefit.title}
+                  </h3>
+
+                  <p className={`text-slate-600 font-medium text-sm sm:text-base leading-relaxed ${getTextAlignClass()}`}>
+                    {benefit.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. NUESTRO PROCESO EN 4 PASOS SIMPLES                                      */}
+      {/* ========================================================================= */}
+      <section 
+        id="proceso" 
+        className="py-20 lg:py-28 transition-colors border-t border-slate-100"
+        style={{ backgroundColor: config.styles?.processBgColor || '#ffffff' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-3.5 py-1 rounded-full inline-block">
+              Instalación sin complicaciones
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
+              {config.processTitle || 'Nuestro Proceso en 4 Pasos Simples'}
+            </h2>
+            <p className={`text-base text-slate-600 font-medium max-w-2xl mx-auto ${getTextAlignClass()}`}>
+              {config.processSubtitle || 'De tu recibo de luz actual a tu propio sistema solar generando energía en tiempo récord.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {config.steps.map((step, idx) => (
+              <div 
+                key={step.id} 
+                className="bg-slate-50 border border-slate-200 rounded-3xl p-6 sm:p-7 flex flex-col justify-between relative group hover:border-emerald-500/50 transition-all hover:shadow-lg"
+              >
+                <div className="space-y-4">
+                  {/* Step Number Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-3xl sm:text-4xl font-black text-emerald-600 font-mono">
+                      0{step.stepNumber || idx + 1}
+                    </span>
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                      {idx === 0 && <FileText className="w-5 h-5" />}
+                      {idx === 1 && <Clock className="w-5 h-5" />}
+                      {idx === 2 && <Wrench className="w-5 h-5" />}
+                      {idx === 3 && <Zap className="w-5 h-5" />}
+                      {idx > 3 && <Check className="w-5 h-5" />}
+                    </div>
+                  </div>
+
+                  <h4 className="text-lg font-black text-slate-900 tracking-tight">
+                    {step.title}
+                  </h4>
+
+                  <p className={`text-slate-600 text-xs sm:text-sm font-medium leading-relaxed ${getTextAlignClass()}`}>
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick CTA to start Step 1 */}
+          <div className="mt-12 text-center">
+            <a
+              href={getCleanWhatsappUrl('Hola Solux Green, quiero enviar mi recibo para comenzar el Paso 1 de cotización')}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
+              className="inline-flex items-center gap-3 px-8 py-4 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Iniciar Ahora: Enviar Recibo de Luz</span>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 6. SECCIÓN DE INTERACCIÓN DIRECTA (WHATSAPP CARD)                          */}
+      {/* ========================================================================= */}
+      <section 
+        id="soluciones"
+        className="py-16 lg:py-24 text-white relative overflow-hidden transition-colors"
+        style={{ backgroundColor: config.styles?.whatsappCardBgColor || '#064e3b' }}
+      >
+        {/* Decorative background circle */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 text-emerald-300 flex items-center justify-center mx-auto shadow-inner">
+            <MessageSquare className="w-8 h-8 fill-emerald-300" />
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight uppercase">
+            {config.whatsappCardTitle || '¿Cuánto puedes ahorrar con tu techo? Descúbrelo hoy'}
+          </h2>
+
+          <p className={`text-base sm:text-xl text-emerald-100 font-medium max-w-2xl mx-auto leading-relaxed ${getTextAlignClass()}`}>
+            {config.whatsappCardDescription || 'Tómale una foto a tu recibo de luz más reciente y envíanosla. Haremos una simulación sin ningún compromiso.'}
+          </p>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href={getCleanWhatsappUrl('Hola Solux Green, aquí te comparto la foto de mi recibo de luz para mi simulación sin compromiso')}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+              className="w-full sm:w-auto px-10 py-5 text-white font-black text-base sm:text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <span>{config.whatsappCardBtnText || '📲 Enviar mi recibo por WhatsApp'}</span>
+            </a>
+          </div>
+
+          <p className="text-xs text-emerald-200/80 font-bold uppercase tracking-wider">
+            Respuesta promedio: 15 minutos • Sin costo de estudio inicial
+          </p>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. PREGUNTAS FRECUENTES (FAQ)                                             */}
+      {/* ========================================================================= */}
+      <section 
+        id="faq" 
+        className="py-20 lg:py-28 transition-colors border-t border-slate-200"
+        style={{ backgroundColor: config.styles?.faqBgColor || '#f8fafc' }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="text-center mb-16 space-y-3">
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-3.5 py-1 rounded-full inline-block">
+              Respuestas Claras
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
+              {config.faqTitle || 'Preguntas Frecuentes'}
+            </h2>
+            <p className={`text-base text-slate-600 font-medium max-w-xl mx-auto ${getTextAlignClass()}`}>
+              {config.faqSubtitle || 'Todo lo que necesitas saber antes de dar el paso a la energía solar inteligente.'}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {config.faqs.map((faq) => {
+              const isOpen = expandedFaqId === faq.id;
+              return (
+                <div 
+                  key={faq.id} 
+                  className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs transition-all"
+                >
+                  <button
+                    onClick={() => setExpandedFaqId(isOpen ? null : faq.id)}
+                    className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 text-base sm:text-lg hover:text-emerald-600 transition-colors cursor-pointer"
+                  >
+                    <span>{faq.question}</span>
+                    <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-500">
+                      {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="px-6 pb-6 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100 pt-4"
+                      >
+                        <p className={getTextAlignClass()}>{faq.answer}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 8. FOOTER (PIE DE PÁGINA) & DIRECT SUPPORT                                */}
+      {/* ========================================================================= */}
+      <footer 
+        className="text-slate-400 py-16 transition-colors border-t border-slate-800"
+        style={{ backgroundColor: config.styles?.footerBgColor || '#020617' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {/* Columna 1: Marca y descripción */}
+            <div className="space-y-4">
+              <img 
+                src={config.logoUrl} 
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = SOLUX_LOGO_FALLBACK;
+                }}
+                alt="Solux Green" 
+                className="h-10 w-auto object-contain brightness-125"
+              />
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                {config.footerDescription || 'Solux Green — Soluciones de Energía Limpia y Ahorro Inteligente.'}
+              </p>
+              <div className="text-[11px] text-slate-500 font-mono">
+                Tecnología fotovoltaica de alto rendimiento interconectada a CFE.
+              </div>
+            </div>
+
+            {/* Columna 2: Contacto & Ubicación */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Contacto Directo
+              </h4>
+              <ul className="space-y-2 text-xs">
+                <li className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>{config.contactPhone}</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>{config.contactEmail}</span>
+                </li>
+                {config.contactAddress && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{config.contactAddress}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* Columna 3: Enlace Directo Soporte WhatsApp */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Soporte y Asistencia
+              </h4>
+              <p className="text-xs text-slate-400">
+                ¿Dudas sobre tus trámites o monitoreo? Contáctanos de inmediato.
+              </p>
+              <a
+                href={getCleanWhatsappUrl('Hola Solux Green, requiero asistencia técnica / comercial')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Enlace Directo de Soporte por WhatsApp</span>
+              </a>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <div>
+              © {new Date().getFullYear()} {config.brandName || 'Solux Green'}. Todos los derechos reservados.
+            </div>
+            <div className="flex items-center gap-6">
+              <span className="hover:text-slate-400 cursor-pointer">{config.footerPrivacyText || 'Aviso de Privacidad'}</span>
+              <span>•</span>
+              <span className="hover:text-slate-400 cursor-pointer">{config.footerTermsText || 'Términos de Servicio'}</span>
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
+      {/* ========================================================================= */}
+      {/* BOTÓN FLOTANTE SIEMPRE VISIBLE DE WHATSAPP EN ESQUINA INFERIOR DERECHA    */}
+      {/* ========================================================================= */}
+      {config.floatingWhatsappActive !== false && (
+        <aside 
+          aria-label="Atención en línea por WhatsApp"
+          className="fixed bottom-6 right-6 z-50 flex items-center group cursor-pointer"
+        >
+          <div className="mr-3 px-3.5 py-1.5 bg-slate-900/90 text-white text-xs font-extrabold rounded-xl shadow-xl border border-slate-800 backdrop-blur-md hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity">
+            ¿Cotizamos tu sistema solar?
+          </div>
+          
+          <a
+            href={getCleanWhatsappUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 active:scale-95 transition-all relative border-2 border-white/40"
+            aria-label="Abrir chat de WhatsApp"
+          >
+            <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-25" />
+            <MessageSquare className="w-7 h-7 sm:w-8 sm:h-8 fill-white" />
+          </a>
+        </aside>
+      )}
+
+    </div>
+  );
+}
