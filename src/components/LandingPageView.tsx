@@ -6,7 +6,7 @@ import {
   ChevronUp, ExternalLink, Settings, ArrowLeft, ChevronLeft, 
   ChevronRight, Sparkles, FileText, Clock, Wrench, Cpu, 
   TrendingDown, DollarSign, Layers, Check, Camera, User, Send,
-  AlertTriangle, RotateCcw
+  AlertTriangle, RotateCcw, Menu, X, LogIn
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat, SolarProject } from '../types';
 import { SOLUX_LOGO_FALLBACK } from '../logoConfig';
@@ -18,6 +18,7 @@ interface LandingPageViewProps {
   onNavigateToPortal?: () => void;
   onAddSolarProject?: (project: SolarProject) => void;
   soluxConfig?: any;
+  currentUser?: any;
 }
 
 export default function LandingPageView({
@@ -25,8 +26,12 @@ export default function LandingPageView({
   onNavigateToAdmin,
   onNavigateToPortal,
   onAddSolarProject,
-  soluxConfig
+  soluxConfig,
+  currentUser
 }: LandingPageViewProps) {
+  // Mobile / Tablet Navigation Drawer State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Slider State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const slides = config.heroSlides && config.heroSlides.length > 0 ? config.heroSlides : [];
@@ -235,7 +240,7 @@ export default function LandingPageView({
       id="solux-landing-page"
     >
       {/* ========================================================================= */}
-      {/* 1. TOP ANNOUNCEMENT & ADMIN NAVIGATION QUICK BAR                           */}
+      {/* 1. TOP ANNOUNCEMENT & ACCESS QUICK BAR                                     */}
       {/* ========================================================================= */}
       <div className="bg-slate-950 text-slate-300 text-xs py-2 px-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2 z-50 relative">
         <div className="flex items-center gap-3 text-[11px] font-semibold">
@@ -251,32 +256,52 @@ export default function LandingPageView({
         </div>
 
         <div className="flex items-center gap-2">
-          {onNavigateToAdmin && (
-            <button
-              onClick={onNavigateToAdmin}
-              className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-sm"
-              title="Ir al Panel de Edición de la Landing Page"
-            >
-              <Settings className="w-3 h-3" />
-              <span>Admin Landing</span>
-            </button>
-          )}
-
-          {onNavigateToPortal && (
-            <button
-              onClick={onNavigateToPortal}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border border-slate-700"
-              title="Volver al Portal Multi-Rol de Solux Green"
-            >
-              <ArrowLeft className="w-3 h-3 text-emerald-400" />
-              <span>Portal Multi-Rol</span>
-            </button>
+          {/* Admin shortcuts only if logged-in user is admin */}
+          {currentUser?.role === 'admin' ? (
+            <>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-900/60 border border-violet-500/40 text-violet-200 text-[10px] font-black uppercase">
+                👑 Admin Activo
+              </span>
+              {onNavigateToAdmin && (
+                <button
+                  onClick={onNavigateToAdmin}
+                  className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                  title="Ir al Panel de Edición de la Landing Page"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Admin Landing</span>
+                </button>
+              )}
+              {onNavigateToPortal && (
+                <button
+                  onClick={onNavigateToPortal}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border border-slate-700"
+                  title="Ir al Panel de Operaciones"
+                >
+                  <ArrowLeft className="w-3 h-3 text-emerald-400" />
+                  <span>Panel Admin</span>
+                </button>
+              )}
+            </>
+          ) : (
+            /* Final user: only see button to access the system with credentials */
+            onNavigateToPortal && (
+              <button
+                type="button"
+                onClick={onNavigateToPortal}
+                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                title="Acceso al sistema con credenciales registradas"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Acceder al Sistema</span>
+              </button>
+            )
           )}
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. BARRA DE NAVEGACIÓN (HEADER)                                           */}
+      {/* 1. BARRA DE NAVEGACIÓN (HEADER) RESPONSIVE (DESKTOP, TABLET, MOBILE)      */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -296,8 +321,8 @@ export default function LandingPageView({
             </a>
           </div>
 
-          {/* Menú de Navegación Principal */}
-          <nav className="hidden lg:flex items-center gap-8">
+          {/* Menú de Navegación Principal (Visible en Desktop lg+) */}
+          <nav className="hidden lg:flex items-center gap-7">
             {config.headerMenuItems.map((item) => (
               <a
                 key={item.id}
@@ -309,21 +334,130 @@ export default function LandingPageView({
             ))}
           </nav>
 
-          {/* Botón Directo: Cotizar por WhatsApp */}
-          <div className="flex items-center gap-3">
+          {/* Botones de Acción (Acceder al Sistema, WhatsApp y Menú Hamburguesa) */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Botón: Acceder al Sistema (Para empleados y usuarios finales registrados) */}
+            {onNavigateToPortal && (
+              <button
+                type="button"
+                onClick={onNavigateToPortal}
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-emerald-600/30 hover:border-emerald-500 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                title="Acceder al sistema con usuario y contraseña"
+              >
+                <LogIn className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="hidden md:inline">Acceder al Sistema</span>
+                <span className="md:hidden">Acceso</span>
+              </button>
+            )}
+
+            {/* Botón Directo: Cotizar por WhatsApp */}
             <a
               href={getCleanWhatsappUrl()}
               target="_blank"
               rel="noopener noreferrer"
               style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
-              className="px-4 sm:px-5 py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
+              className="px-3.5 sm:px-5 py-2 sm:py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4 fill-white" />
+              <MessageSquare className="w-4 h-4 fill-white shrink-0" />
               <span className="hidden sm:inline">{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
               <span className="sm:hidden">WhatsApp</span>
             </a>
+
+            {/* Botón Hamburguesa Activo para Tablet y Móvil (lg:hidden) */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors focus:outline-none cursor-pointer flex items-center justify-center border border-slate-200 shadow-xs"
+              aria-label={isMobileMenuOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
+              title={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-slate-900" />
+              ) : (
+                <Menu className="w-6 h-6 text-slate-900" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Desplegable de Navegación Móvil y Tablet (Drawer / Dropdown) */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="lg:hidden bg-white border-b border-slate-200 shadow-xl overflow-hidden z-50"
+            >
+              <div className="px-4 sm:px-6 py-5 space-y-4 max-w-7xl mx-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Menú de Navegación
+                  </span>
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase">
+                    Solux Green
+                  </span>
+                </div>
+                
+                {/* Enlaces de Navegación */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {config.headerMenuItems.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 font-bold text-sm transition-colors border border-slate-100 active:scale-98"
+                    >
+                      <span>{item.label}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </a>
+                  ))}
+                </div>
+
+                {/* Acciones Rápidas en Menú Móvil/Tablet */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5">
+                  {onNavigateToPortal && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onNavigateToPortal();
+                      }}
+                      className="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-98"
+                    >
+                      <LogIn className="w-4 h-4 text-emerald-400" />
+                      <span>Acceder al Sistema (Empleados)</span>
+                    </button>
+                  )}
+
+                  <a
+                    href={getCleanWhatsappUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+                    className="flex-1 py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-98"
+                  >
+                    <MessageSquare className="w-4 h-4 fill-white" />
+                    <span>{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
+                  </a>
+                </div>
+
+                {/* Información de contacto */}
+                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                    {config.contactPhone || '229 323 3633'}
+                  </span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">
+                    Atención Inmediata
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* ========================================================================= */}

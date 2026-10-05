@@ -1273,25 +1273,6 @@ function App() {
     }
   }, [currentUser, activeRole]);
 
-  // Synchronize effectiveUser if role is set but no currentUser is set
-  React.useEffect(() => {
-    if (activeRole && !currentUser && users && users.length > 0) {
-      let defaultUser = null;
-      if (activeRole === 'admin') {
-        defaultUser = users.find((u: any) => u.role === 'admin' && u.whatsapp && u.whatsapp.trim() !== '') || users.find((u: any) => u.role === 'admin');
-      } else if (activeRole === 'comercial') {
-        defaultUser = users.find((u: any) => u.role === 'comercial');
-      } else if (activeRole === 'enlace') {
-        defaultUser = users.find((u: any) => u.role === 'enlace');
-      } else if (activeRole === 'tech') {
-        defaultUser = users.find((u: any) => u.role === 'partner');
-      }
-      if (defaultUser) {
-        setCurrentUser(defaultUser);
-      }
-    }
-  }, [activeRole, currentUser, users]);
-
   const handleUpdateProfile = (updatedUser: any) => {
     const finalUpdatedUser = {
       ...currentUser,
@@ -1539,17 +1520,8 @@ function App() {
       });
     }
 
-    if (foundUser) {
-      // If user matched, sync/update password if necessary
-      if (trimPass && foundUser.password !== trimPass) {
-        foundUser = { ...foundUser, password: trimPass };
-        setUsers(prev => prev.map(u => u.id === foundUser.id ? foundUser : u));
-        upsertUser(foundUser).catch(err => console.warn('Error updating user password on login:', err));
-      }
-    }
-
-    // 2. Fallback: Check solarProjects if no user found in users array
     if (!foundUser) {
+      // 2. Fallback: Check solarProjects if client exists in records
       const matchingProject = solarProjects.find(proj => {
         const cName = (proj.clientName || '').trim().toLowerCase();
         const cEmail = (proj.clientEmail || '').trim().toLowerCase();
@@ -1574,7 +1546,7 @@ function App() {
         foundUser = {
           id: `usr_client_${Date.now()}`,
           username: genUser,
-          password: trimPass || 'Solux2026!',
+          password: 'password123',
           role: 'client',
           fullName: matchingProject.clientName,
           whatsapp: matchingProject.clientPhone,
@@ -1586,25 +1558,16 @@ function App() {
       }
     }
 
-    // 3. Auto-provisioning fallback for new credentials like anakarepies@gmail.com
-    if (!foundUser && trimUser.length >= 3) {
-      const targetRole = selectedRoleFilter === 'tech' ? 'partner' : selectedRoleFilter;
-      const userPrefix = trimUser.includes('@') ? trimUser.split('@')[0] : trimUser;
-      const nameParts = userPrefix.split(/[\._-]/).map(p => p.charAt(0).toUpperCase() + p.slice(1));
-      const formattedFullName = nameParts.join(' ') || 'Usuario Registrado';
+    if (!foundUser) {
+      setLoginError('Usuario no registrado. Solo el Administrador General puede dar de alta a los empleados y usuarios autorizados.');
+      return;
+    }
 
-      foundUser = {
-        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        username: userPrefix,
-        email: trimUser.includes('@') ? trimUser : `${userPrefix}@soluxgreen.com.mx`,
-        password: trimPass || 'Solux2026!',
-        role: targetRole,
-        fullName: formattedFullName,
-        whatsapp: ''
-      };
-
-      setUsers(prev => deduplicateUsers([foundUser, ...prev]));
-      upsertUser(foundUser).catch(err => console.warn('Error auto-creating new login user:', err));
+    // Verify Password against registered credentials
+    const expectedPassword = (foundUser.password || '').trim();
+    if (expectedPassword && trimPass !== expectedPassword) {
+      setLoginError('Contraseña incorrecta. Por favor verifica tus credenciales.');
+      return;
     }
     
     if (foundUser) {
@@ -1613,6 +1576,8 @@ function App() {
       if (cleanRole === 'admin') targetRole = 'admin';
       else if (cleanRole === 'comercial') targetRole = 'comercial';
       else if (cleanRole === 'enlace') targetRole = 'enlace';
+      else if (cleanRole === 'partner') targetRole = 'tech';
+      else if (cleanRole === 'client') targetRole = 'client';
       else if (cleanRole === 'partner') targetRole = 'tech';
       else if (cleanRole === 'client') targetRole = 'client';
 
@@ -1941,6 +1906,12 @@ function App() {
     let originalAdmin: any = null;
     if (originalAdminRaw) {
       try { originalAdmin = JSON.parse(originalAdminRaw); } catch(e) {}
+    }
+    
+    // The role switcher is strictly reserved for the Administrator (Super Admin) with an active session
+    const isAdmin = currentUser?.role === 'admin' || !!originalAdmin;
+    if (!isAdmin) {
+      return null;
     }
     
     const roleLabels: Record<string, string> = {
@@ -2412,6 +2383,37 @@ function App() {
   };
 
   if (activeRole === 'admin') {
+    if (currentUser?.role !== 'admin') {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Acceso Restringido a Administrador</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              El panel de Administrador General requiere iniciar sesión con credenciales de administrador autorizadas.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedRoleFilter('admin');
+                setActiveRole('login');
+              }}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Iniciar Sesión como Administrador
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative antialiased" id="admin-portal-root">
         {renderAdminSwitcher()}
@@ -2457,6 +2459,37 @@ function App() {
   }
 
   if (activeRole === 'comercial') {
+    if (!currentUser) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Por favor inicia sesión con tu usuario y contraseña de Asesor Verde registrado.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedRoleFilter('comercial');
+                setActiveRole('login');
+              }}
+              className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Iniciar Sesión como Asesor Verde
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative antialiased" id="comercial-portal-root">
         {renderAdminSwitcher()}
@@ -2485,6 +2518,37 @@ function App() {
   }
 
   if (activeRole === 'tech') {
+    if (!currentUser) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Por favor inicia sesión con tu usuario y contraseña de Partner Técnico registrado.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedRoleFilter('tech');
+                setActiveRole('login');
+              }}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Iniciar Sesión como Partner
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative antialiased" id="tech-portal-root">
         {renderAdminSwitcher()}
@@ -2509,6 +2573,37 @@ function App() {
   }
 
   if (activeRole === 'enlace') {
+    if (!currentUser) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Por favor inicia sesión con tu usuario y contraseña de Asesor de Enlace registrado.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedRoleFilter('enlace');
+                setActiveRole('login');
+              }}
+              className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Iniciar Sesión como Asesor de Enlace
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative antialiased" id="enlace-portal-root">
         {renderAdminSwitcher()}
@@ -2538,6 +2633,37 @@ function App() {
   }
 
   if (activeRole === 'client') {
+    if (!currentUser) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Portal de Clientes Solux Green</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Ingresa con tus credenciales de cliente para consultar tu propuesta solar, estatus y documentos.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedRoleFilter('client');
+                setActiveRole('login');
+              }}
+              className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Acceder como Cliente
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative antialiased" id="client-portal-root">
         {renderAdminSwitcher()}
@@ -2566,16 +2692,51 @@ function App() {
         {renderAdminSwitcher()}
         <LandingPageView 
           config={landingConfig}
-          onNavigateToAdmin={() => setActiveRole('landingadmin')}
+          onNavigateToAdmin={() => {
+            if (currentUser?.role === 'admin') {
+              setActiveRole('landingadmin');
+            } else {
+              setActiveRole('login');
+            }
+          }}
           onNavigateToPortal={() => setActiveRole('login')}
           onAddSolarProject={handleAddSolarProject}
           soluxConfig={soluxConfig}
+          currentUser={currentUser}
         />
       </div>
     );
   }
 
   if (activeRole === 'landingadmin') {
+    if (currentUser?.role !== 'admin') {
+      return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center">
+          <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-2xl mx-auto">
+              🔒
+            </div>
+            <h2 className="text-xl font-black">Acceso Restringido a Administrador</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              El panel de administración de la landing page requiere una sesión activa con credenciales de Administrador General.
+            </p>
+            <button
+              onClick={() => setActiveRole('login')}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Iniciar Sesión como Administrador
+            </button>
+            <button
+              onClick={() => setActiveRole('landingpage')}
+              className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+            >
+              Volver a la Página Principal
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col font-sans relative antialiased" id="landingadmin-portal-root">
         {renderAdminSwitcher()}
@@ -2718,40 +2879,23 @@ function App() {
               </p>
             </div>
 
-            {/* Direct Landing Page and Admin Landing Page Quick Section */}
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Direct Landing Page Navigation */}
+            <div className="w-full">
               <button
                 type="button"
                 onClick={() => setActiveRole('landingpage')}
-                className="p-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl shadow-md flex items-center justify-between transition-all cursor-pointer group active:scale-98"
+                className="w-full p-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl shadow-xs flex items-center justify-between transition-all cursor-pointer group active:scale-98"
               >
                 <div className="flex items-center gap-2.5 text-left">
-                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                    <Globe className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <Globe className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider block">Ver Landing Page</span>
-                    <span className="text-[9px] text-emerald-100 font-medium block">Página pública comercial Solux Green</span>
+                    <span className="text-[11px] font-black uppercase tracking-wider block text-slate-800">Ver Página de Inicio (Landing Page)</span>
+                    <span className="text-[9px] text-slate-400 font-medium block">Página comercial pública para clientes y cotizaciones</span>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-1 transition-transform shrink-0" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveRole('landingadmin')}
-                className="p-3.5 bg-gradient-to-r from-violet-700 to-purple-800 hover:from-violet-800 hover:to-purple-900 text-white rounded-2xl shadow-md flex items-center justify-between transition-all cursor-pointer group active:scale-98"
-              >
-                <div className="flex items-center gap-2.5 text-left">
-                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                    <SlidersHorizontal className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider block">Admin Landing Page</span>
-                    <span className="text-[9px] text-violet-200 font-medium block">Edición de textos, fotos a Supabase y estilos</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-violet-200 group-hover:translate-x-1 transition-transform shrink-0" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
               </button>
             </div>
 
