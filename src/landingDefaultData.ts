@@ -144,7 +144,7 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
     {
       id: 'benefit_4',
       title: 'Retorno de Inversión Rápido',
-      description: 'Recupera tu inversión en un periodo de 2 a 4 años y disfruta más de 20 años de energía prácticamente gratuita.',
+      description: 'Recupera tu inversión en un periodo de 2 a 5 años y disfruta más de 20 años de energía prácticamente gratuita.',
       iconName: 'DollarSign',
       imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80'
     }
@@ -259,7 +259,7 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
   // 6. Sección de Interacción Directa (WhatsApp Card)
   whatsappCardTitle: '¿Cuánto puedes ahorrar con tu techo? Descúbrelo hoy',
   whatsappCardDescription: 'Tómale una foto a tu recibo de luz más reciente y envíanosla. Haremos una simulación sin ningún compromiso.',
-  whatsappCardBtnText: '📲 Enviar mi recibo por WhatsApp',
+  whatsappCardBtnText: '📲 Enviar mi recibo',
   whatsappCardImageUrl: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
 
   // 7. Preguntas Frecuentes (FAQ)

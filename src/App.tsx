@@ -456,6 +456,14 @@ function App() {
               return cleanSlide;
             });
           }
+          if (parsed && Array.isArray(parsed.benefits)) {
+            parsed.benefits = parsed.benefits.map((b: any) => ({
+              ...b,
+              description: typeof b.description === 'string'
+                ? b.description.replace('2 a 4 años', '2 a 5 años')
+                : b.description
+            }));
+          }
           const mergedCfg = {
             ...DEFAULT_LANDING_CONFIG,
             ...parsed,

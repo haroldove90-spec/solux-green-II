@@ -40,7 +40,7 @@ export default function LandingPageView({
   const [formEmail, setFormEmail] = useState('');
   const [formMunicipality, setFormMunicipality] = useState('');
   const [formMapsUrl, setFormMapsUrl] = useState('');
-  const [formBill, setFormBill] = useState<number | string>(3500);
+  const [formBill, setFormBill] = useState<number | string>('');
   const [formSpace, setFormSpace] = useState<string>('');
   const [formMeters, setFormMeters] = useState<string>('1');
   const [formCFE, setFormCFE] = useState<'activo_sin_adeudo' | 'con_adeudo' | 'inactivo'>('activo_sin_adeudo');
@@ -575,7 +575,7 @@ export default function LandingPageView({
                   </h3>
 
                   <p className={`text-slate-600 font-medium text-sm sm:text-base leading-relaxed ${getTextAlignClass()}`}>
-                    {benefit.description}
+                    {benefit.description.replace('2 a 4 años', '2 a 5 años')}
                   </p>
                 </div>
               </motion.div>
@@ -684,13 +684,16 @@ export default function LandingPageView({
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href={getCleanWhatsappUrl('Hola Solux Green, aquí te comparto la foto de mi recibo de luz para mi simulación sin compromiso')}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#contacto"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('contacto') || document.querySelector('#contacto');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
               style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
               className="w-full sm:w-auto px-10 py-5 text-white font-black text-base sm:text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
             >
-              <span>{config.whatsappCardBtnText || '📲 Enviar mi recibo por WhatsApp'}</span>
+              <span>{config.whatsappCardBtnText || '📲 Enviar mi recibo'}</span>
             </a>
           </div>
 
@@ -715,7 +718,7 @@ export default function LandingPageView({
               Solicita Información • Cotización y Registro de Prospecto
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
-              Calcula tus Paneles Solares y Solicita tu Estudio
+              Contacto
             </h2>
             <p className="text-slate-600 text-sm sm:text-base font-medium max-w-2xl mx-auto leading-relaxed">
               Completa la información técnica básica de tu inmueble. Al enviar el formulario recibirás tu cálculo preliminar de inmediato y se enviará a nuestro WhatsApp oficial para asesorarte paso a paso.
@@ -876,9 +879,11 @@ export default function LandingPageView({
                         <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
                           Monto de Pago Recibo CFE Promedio ($ MXN Bimestral) *
                         </label>
-                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {billNum > 0 ? `$${billNum.toLocaleString('es-MX')} MXN` : '$0'}
-                        </span>
+                        {billNum > 0 && (
+                          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            ${billNum.toLocaleString('es-MX')} MXN
+                          </span>
+                        )}
                       </div>
                       <input
                         type="text"
@@ -887,7 +892,7 @@ export default function LandingPageView({
                         required
                         value={formBill}
                         onChange={e => setFormBill(e.target.value.replace(/[^0-9]/g, ''))}
-                        placeholder="Ej. 3500"
+                        placeholder="Ej. 3500 (o selecciona abajo)"
                         className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-extrabold text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
                       />
 
@@ -906,7 +911,7 @@ export default function LandingPageView({
                             type="button"
                             onClick={() => setFormBill(chip.val)}
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer border ${
-                              Number(formBill) === chip.val
+                              formBill !== '' && Number(formBill) === chip.val
                                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                             }`}
@@ -1041,65 +1046,6 @@ export default function LandingPageView({
                           );
                         })}
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Resumen Financiero y de Paneles en Tiempo Real */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white border border-slate-800 space-y-3 shadow-lg">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                    <div>
-                      <div className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Estimación Solar en Tiempo Real</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-bold">
-                        Dimensionamiento oficial para consumo bimestral de ${billNum.toLocaleString('es-MX')} MXN
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] text-slate-400 uppercase font-bold block">Inversión Base Estimada</span>
-                      <span className="text-base sm:text-lg font-black text-white font-mono">
-                        ${baseInvestment.toLocaleString('es-MX')} <span className="text-[10px] text-slate-400">MXN</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
-                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Paneles Sugeridos</span>
-                      <span className="text-sm font-black text-emerald-400 font-mono">
-                        {estimatedPanelsCount} {estimatedPanelsCount === 1 ? 'Módulo' : 'Módulos'}
-                      </span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">{((estimatedPanelsCount * 550) / 1000).toFixed(2)} kWp</span>
-                    </div>
-
-                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
-                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Enganche {finCalc.downPercent}%</span>
-                      <span className="text-sm font-black text-amber-400 font-mono">
-                        ${finCalc.downPayment.toLocaleString('es-MX')}
-                      </span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">Al firmar contrato</span>
-                    </div>
-
-                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
-                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">
-                        {finCalc.isContado ? 'Descuento 5% Contado' : `${finCalc.months} Mensualidades`}
-                      </span>
-                      <span className="text-sm font-black text-sky-400 font-mono">
-                        {finCalc.isContado 
-                          ? `-$${Math.round(baseInvestment * 0.05).toLocaleString('es-MX')}` 
-                          : `$${finCalc.monthlyPayment.toLocaleString('es-MX')}/mes`}
-                      </span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">{finCalc.isContado ? 'Neto a liquidar' : 'Sobre saldos'}</span>
-                    </div>
-
-                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
-                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Ahorro Bimestral</span>
-                      <span className="text-sm font-black text-emerald-300 font-mono">
-                        ~${bimestralSavings.toLocaleString('es-MX')}
-                      </span>
-                      <span className="text-[8px] text-slate-400 block mt-0.5">Hasta 98% ahorro</span>
                     </div>
                   </div>
                 </div>

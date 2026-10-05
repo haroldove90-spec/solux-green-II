@@ -6,7 +6,7 @@ import {
   HelpCircle, MessageSquare, Phone, Mail, MapPin, 
   Sliders, ArrowLeft, ExternalLink, Database, Copy, 
   CheckCircle2, AlertTriangle, Layers, Info, ShieldCheck,
-  ChevronRight, RefreshCw, SlidersHorizontal
+  ChevronRight, RefreshCw, SlidersHorizontal, Clock
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
 import { uploadLandingImageToSupabase } from '../supabaseService';
@@ -538,6 +538,77 @@ export default function AdminLandingPage({
                     )}
                     <span>{saving ? 'Guardando...' : saveSuccess ? '¡Guardado!' : 'Guardar Cambios'}</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Slider Behavior: Transition Time & Auto-Play Setting */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black uppercase text-white tracking-wide flex items-center gap-2">
+                      <span>Tiempo de Transición del Slider</span>
+                      <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                        {formData.sliderIntervalSec || 6} seg
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Ajusta cuántos segundos permanece activa cada diapositiva antes de cambiar automáticamente a la siguiente.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={formData.sliderAutoPlay}
+                      onChange={(e) => handleChange('sliderAutoPlay', e.target.checked)}
+                      className="rounded accent-emerald-500 cursor-pointer w-4 h-4"
+                    />
+                    <span className="font-extrabold">Auto-reproducir</span>
+                  </label>
+
+                  <div className="flex items-center gap-2 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-700">
+                    <span className="text-xs font-bold text-slate-400">Tiempo:</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={60}
+                      step={1}
+                      value={formData.sliderIntervalSec || 6}
+                      onChange={(e) => handleChange('sliderIntervalSec', Math.max(2, Math.min(60, Number(e.target.value) || 6)))}
+                      className="w-16 px-2 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs font-black text-center text-emerald-400 focus:outline-none focus:border-emerald-500"
+                    />
+                    <span className="text-xs font-bold text-slate-400">seg</span>
+                  </div>
+
+                  {/* Preset quick buttons */}
+                  <div className="flex items-center gap-1">
+                    {[
+                      { label: '3s', val: 3 },
+                      { label: '4s', val: 4 },
+                      { label: '5s', val: 5 },
+                      { label: '6s', val: 6 },
+                      { label: '8s', val: 8 },
+                      { label: '10s', val: 10 }
+                    ].map(preset => (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => handleChange('sliderIntervalSec', preset.val)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase cursor-pointer border transition-all ${
+                          (formData.sliderIntervalSec || 6) === preset.val
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-850'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1078,16 +1149,31 @@ export default function AdminLandingPage({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700">
                     <input
                       type="checkbox"
                       checked={formData.sliderAutoPlay}
                       onChange={(e) => handleChange('sliderAutoPlay', e.target.checked)}
                       className="rounded accent-emerald-500 cursor-pointer"
                     />
-                    <span>Auto-reproducir Slider</span>
+                    <span className="font-bold">Auto-reproducir</span>
                   </label>
+
+                  <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700">
+                    <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-xs font-bold text-slate-400">Tiempo:</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={60}
+                      step={1}
+                      value={formData.sliderIntervalSec || 6}
+                      onChange={(e) => handleChange('sliderIntervalSec', Math.max(2, Math.min(60, Number(e.target.value) || 6)))}
+                      className="w-14 px-2 py-0.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-black text-center text-emerald-400 focus:outline-none focus:border-emerald-500"
+                    />
+                    <span className="text-xs font-bold text-slate-400">seg</span>
+                  </div>
 
                   <button
                     type="button"
