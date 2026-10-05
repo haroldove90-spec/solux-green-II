@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Save, Eye, RotateCcw, Upload, Trash2, Plus, Check, 
@@ -6,11 +6,32 @@ import {
   HelpCircle, MessageSquare, Phone, Mail, MapPin, 
   Sliders, ArrowLeft, ExternalLink, Database, Copy, 
   CheckCircle2, AlertTriangle, Layers, Info, ShieldCheck,
-  ChevronRight, RefreshCw
+  ChevronRight, RefreshCw, SlidersHorizontal
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
 import { uploadLandingImageToSupabase } from '../supabaseService';
 import { DEFAULT_LANDING_CONFIG } from '../landingDefaultData';
+
+export const ensureThreeSlides = (slides?: LandingSlide[]): LandingSlide[] => {
+  const defaults = DEFAULT_LANDING_CONFIG.heroSlides;
+  const list = Array.isArray(slides) && slides.length > 0 ? [...slides] : [...defaults];
+  while (list.length < 3) {
+    const idx = list.length;
+    list.push(defaults[idx] || {
+      id: `slide_${idx + 1}`,
+      imageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1920&q=80',
+      badge: idx === 2 ? '🤝 Red de Asesores de Enlace' : idx === 1 ? '🏢 Soluciones Comerciales e Industriales' : '⚡ Ahorra hasta un 98%',
+      title: idx === 2 ? 'Gana Dinero Sin Vender refiriendo proyectos solares' : idx === 1 ? 'Protege a tu empresa contra alzas de CFE' : 'Transforma la luz del sol en ahorro real',
+      subtitle: 'Instalaciones fotovoltaicas con garantía por escrito.',
+      ctaText: idx === 2 ? '🚀 Quiero ser Asesor de Enlace' : idx === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
+      ctaLink: idx === 2 ? 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' : idx === 1 ? 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20para%20mi%20empresa' : '#contacto',
+      ctaBgColor: idx === 2 ? '#e11d48' : idx === 1 ? '#0284c7' : '#059669',
+      ctaTextColor: '#ffffff',
+      textAlign: idx === 2 ? 'center' : 'left'
+    });
+  }
+  return list;
+};
 
 interface AdminLandingPageProps {
   config: LandingConfig;
@@ -93,15 +114,31 @@ export default function AdminLandingPage({
   const [formData, setFormData] = useState<LandingConfig>(() => ({
     ...DEFAULT_LANDING_CONFIG,
     ...config,
+    heroSlides: ensureThreeSlides(config?.heroSlides),
     styles: {
       ...DEFAULT_LANDING_CONFIG.styles,
       ...(config?.styles || {})
     }
   }));
 
+  // Synchronize when parent config changes (e.g. loaded from Supabase)
+  useEffect(() => {
+    if (config) {
+      setFormData(prev => ({
+        ...DEFAULT_LANDING_CONFIG,
+        ...config,
+        heroSlides: ensureThreeSlides(config.heroSlides || prev.heroSlides),
+        styles: {
+          ...DEFAULT_LANDING_CONFIG.styles,
+          ...(config.styles || {})
+        }
+      }));
+    }
+  }, [config]);
+
   const [activeTab, setActiveTab] = useState<
-    'general' | 'hero' | 'benefits' | 'process' | 'whatsapp' | 'stats' | 'faqs' | 'styles' | 'sql'
-  >('hero');
+    'slider_buttons' | 'hero' | 'general' | 'benefits' | 'process' | 'whatsapp' | 'stats' | 'faqs' | 'styles' | 'sql'
+  >('slider_buttons');
 
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -112,7 +149,19 @@ export default function AdminLandingPage({
 
   // Helper to handle general text changes
   const handleChange = (field: keyof LandingConfig, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      if (field === 'heroCtaText') {
+        const newSlides = ensureThreeSlides(prev.heroSlides);
+        newSlides[0] = { ...newSlides[0], ctaText: value };
+        next.heroSlides = newSlides;
+      } else if (field === 'heroCtaLink') {
+        const newSlides = ensureThreeSlides(prev.heroSlides);
+        newSlides[0] = { ...newSlides[0], ctaLink: value };
+        next.heroSlides = newSlides;
+      }
+      return next;
+    });
   };
 
   // Helper to handle nested styles changes
@@ -202,9 +251,14 @@ export default function AdminLandingPage({
 
   const handleUpdateSlide = (index: number, updatedFields: Partial<LandingSlide>) => {
     setFormData(prev => {
-      const newSlides = [...prev.heroSlides];
+      const newSlides = ensureThreeSlides(prev.heroSlides);
       newSlides[index] = { ...newSlides[index], ...updatedFields };
-      return { ...prev, heroSlides: newSlides };
+      const extra: Partial<LandingConfig> = {};
+      if (index === 0) {
+        if (updatedFields.ctaText !== undefined) extra.heroCtaText = updatedFields.ctaText;
+        if (updatedFields.ctaLink !== undefined) extra.heroCtaLink = updatedFields.ctaLink;
+      }
+      return { ...prev, ...extra, heroSlides: newSlides };
     });
   };
 
@@ -398,15 +452,16 @@ export default function AdminLandingPage({
       <div className="bg-slate-950/60 border-b border-slate-800 px-4 sm:px-6 py-2 overflow-x-auto scrollbar-thin">
         <div className="flex items-center gap-1 min-w-max">
           {[
-            { id: 'hero', label: '1. Hero & Slider', icon: Sliders },
-            { id: 'general', label: '2. Identidad & Contacto', icon: Phone },
-            { id: 'benefits', label: '3. Beneficios & Fotos', icon: Sparkles },
-            { id: 'process', label: '4. Pasos del Proceso', icon: Layers },
-            { id: 'whatsapp', label: '5. Tarjeta WhatsApp', icon: MessageSquare },
-            { id: 'stats', label: '6. Social Proof / Estadísticas', icon: Layout },
-            { id: 'faqs', label: '7. Preguntas Frecuentes', icon: HelpCircle },
-            { id: 'styles', label: '8. Colores, Fuentes & Justificación', icon: Palette },
-            { id: 'sql', label: '9. Guía SQL Supabase', icon: Database },
+            { id: 'slider_buttons', label: '1. Botones del Slider (3 Botones)', icon: SlidersHorizontal },
+            { id: 'hero', label: '2. Hero: Fotos & Textos', icon: Sliders },
+            { id: 'general', label: '3. Identidad & Contacto', icon: Phone },
+            { id: 'benefits', label: '4. Beneficios & Fotos', icon: Sparkles },
+            { id: 'process', label: '5. Pasos del Proceso', icon: Layers },
+            { id: 'whatsapp', label: '6. Tarjeta WhatsApp', icon: MessageSquare },
+            { id: 'stats', label: '7. Social Proof / Estadísticas', icon: Layout },
+            { id: 'faqs', label: '8. Preguntas Frecuentes', icon: HelpCircle },
+            { id: 'styles', label: '9. Colores, Fuentes & Justificación', icon: Palette },
+            { id: 'sql', label: '10. Guía SQL Supabase', icon: Database },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -434,7 +489,326 @@ export default function AdminLandingPage({
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
 
         {/* --------------------------------------------------------------------- */}
-        {/* TAB 1: HERO & SLIDER DE IMÁGENES                                      */}
+        {/* TAB 1: BOTONES INDEPENDIENTES DEL SLIDER (LAS 3 IMÁGENES)             */}
+        {/* --------------------------------------------------------------------- */}
+        {activeTab === 'slider_buttons' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+              <div className="border-b border-slate-700/80 pb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-2 border border-emerald-500/30">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Control Total e Independiente</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black uppercase text-white flex items-center gap-2.5">
+                    <SlidersHorizontal className="w-6 h-6 text-emerald-400" />
+                    <span>Botones de las 3 Diapositivas del Slider</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed">
+                    Personaliza aquí de forma 100% independiente cada uno de los 3 botones del carrusel principal. Puedes definir el <strong>texto exacto</strong>, el <strong>destino</strong> (WhatsApp oficial o formulario de cotización <code className="text-emerald-400 font-mono">#contacto</code>), el <strong>color de fondo</strong> y el <strong>color del texto</strong>.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={onNavigateToLanding}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-md"
+                  >
+                    <Eye className="w-4 h-4 text-teal-400" />
+                    <span>Ver en Vivo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all cursor-pointer ${
+                      saveSuccess 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                    }`}
+                  >
+                    {saving ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : saveSuccess ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>{saving ? 'Guardando...' : saveSuccess ? '¡Guardado!' : 'Guardar Cambios'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid with the 3 Slider Buttons Cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {[0, 1, 2].map((slideIndex) => {
+                  const s = formData.heroSlides[slideIndex] || {
+                    id: `slide_${slideIndex + 1}`,
+                    imageUrl: '',
+                    title: `Diapositiva #${slideIndex + 1}`,
+                    ctaText: slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : slideIndex === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
+                    ctaLink: slideIndex === 2 ? 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' : '#contacto',
+                    ctaBgColor: slideIndex === 2 ? '#e11d48' : slideIndex === 1 ? '#0284c7' : '#059669',
+                    ctaTextColor: '#ffffff'
+                  };
+
+                  const slideLabel = slideIndex === 2 
+                    ? 'Tercera Imagen (Asesor de Enlace / Solicitud)' 
+                    : slideIndex === 1 
+                    ? 'Segunda Imagen (Comercial / Negocios)' 
+                    : 'Primera Imagen (Residencial / Hogar)';
+
+                  return (
+                    <div 
+                      key={`main_btn_ctrl_${slideIndex}`}
+                      className="bg-slate-950/90 border-2 border-slate-700/80 hover:border-emerald-500/50 rounded-2xl p-5 space-y-4 relative flex flex-col justify-between transition-all shadow-xl"
+                    >
+                      <div className="space-y-4">
+                        {/* Slide Header & Image Thumbnail */}
+                        <div className="border-b border-slate-800 pb-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono font-bold border border-emerald-500/30">
+                                {slideIndex + 1}
+                              </span>
+                              <span>Botón Diapositiva #{slideIndex + 1}</span>
+                            </span>
+
+                            <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                              {slideIndex === 2 ? 'Tercera Imagen' : slideIndex === 1 ? 'Segunda Imagen' : 'Primera Imagen'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                            <div className="w-14 h-10 rounded-lg overflow-hidden bg-slate-950 shrink-0 border border-slate-700">
+                              <img 
+                                src={s.imageUrl} 
+                                alt={s.title || `Diapositiva ${slideIndex + 1}`} 
+                                className="w-full h-full object-cover" 
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-black text-white truncate">{s.title || `Diapositiva ${slideIndex + 1}`}</p>
+                              <p className="text-[9px] text-slate-400 truncate">{slideLabel}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Texto del Botón */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-black uppercase text-slate-200 tracking-wider">
+                              Texto del Botón *
+                            </label>
+                            <span className="text-[9px] text-emerald-400 font-mono">Editable</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={s.ctaText || ''}
+                            onChange={(e) => handleUpdateSlide(slideIndex, { ctaText: e.target.value })}
+                            placeholder={slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : 'Texto del botón...'}
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-black text-white focus:outline-none focus:border-emerald-500 transition-colors shadow-inner"
+                          />
+                        </div>
+
+                        {/* Enlace o Destino del Botón */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-black uppercase text-slate-200 tracking-wider">
+                              Enlace o Destino (Acción) *
+                            </label>
+                            <span className="text-[9px] text-slate-400 font-mono">URL o #sección</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={s.ctaLink || ''}
+                            onChange={(e) => handleUpdateSlide(slideIndex, { ctaLink: e.target.value })}
+                            placeholder="#contacto o https://wa.me/..."
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500 transition-colors shadow-inner"
+                          />
+
+                          {/* Botones de Selección Rápida de Enlace */}
+                          <div className="pt-1 space-y-1">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                              Accesos Rápidos de Destino:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                { 
+                                  label: '📲 WhatsApp Asesor Enlace', 
+                                  url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' 
+                                },
+                                { 
+                                  label: '📝 #contacto (Formulario)', 
+                                  url: '#contacto' 
+                                },
+                                { 
+                                  label: '🏢 WhatsApp Cotizar Negocio', 
+                                  url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20para%20mi%20empresa' 
+                                },
+                                { 
+                                  label: '🏠 WhatsApp Cotizar Hogar', 
+                                  url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20un%20sistema%20de%20paneles%20solares' 
+                                },
+                                { label: '#soluciones', url: '#soluciones' },
+                                { label: '#beneficios', url: '#beneficios' }
+                              ].map(preset => (
+                                <button
+                                  key={preset.url}
+                                  type="button"
+                                  onClick={() => handleUpdateSlide(slideIndex, { ctaLink: preset.url })}
+                                  className={`text-[9px] font-bold px-2 py-1 rounded-lg cursor-pointer transition-all border ${
+                                    s.ctaLink === preset.url
+                                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                                      : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-800'
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Colores del Botón */}
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-extrabold uppercase text-slate-300 block">Color Fondo</label>
+                            <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                              <input
+                                type="color"
+                                value={s.ctaBgColor || '#059669'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaBgColor: e.target.value })}
+                                className="w-7 h-7 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={s.ctaBgColor || '#059669'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaBgColor: e.target.value })}
+                                className="w-full bg-transparent text-[11px] font-mono text-slate-200 font-bold outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-extrabold uppercase text-slate-300 block">Color Texto</label>
+                            <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                              <input
+                                type="color"
+                                value={s.ctaTextColor || '#ffffff'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaTextColor: e.target.value })}
+                                className="w-7 h-7 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={s.ctaTextColor || '#ffffff'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaTextColor: e.target.value })}
+                                className="w-full bg-transparent text-[11px] font-mono text-slate-200 font-bold outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Paleta Rápida de Colores */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Paleta Rápida de Fondos:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { label: 'Esmeralda', hex: '#059669' },
+                              { label: 'Rosa/Rojo', hex: '#e11d48' },
+                              { label: 'Azul', hex: '#0284c7' },
+                              { label: 'Ámbar', hex: '#d97706' },
+                              { label: 'Púrpura', hex: '#7c3aed' },
+                              { label: 'Oscuro', hex: '#0f172a' }
+                            ].map(color => (
+                              <button
+                                key={color.hex}
+                                type="button"
+                                onClick={() => handleUpdateSlide(slideIndex, { ctaBgColor: color.hex })}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-slate-900 border border-slate-700 hover:border-slate-500 cursor-pointer"
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color.hex }} />
+                                <span>{color.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Live Button Preview Box */}
+                      <div className="pt-4 mt-3 border-t border-slate-800 text-center space-y-1.5">
+                        <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                          Vista Previa en Vivo:
+                        </span>
+                        <div
+                          style={{
+                            backgroundColor: s.ctaBgColor || '#059669',
+                            color: s.ctaTextColor || '#ffffff'
+                          }}
+                          className="py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg truncate transition-all text-center"
+                        >
+                          {s.ctaText || 'Botón sin texto'}
+                        </div>
+                        <p className="text-[9px] text-slate-400 truncate">
+                          Destino: <span className="font-mono text-emerald-400">{s.ctaLink || '#contacto'}</span>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Save & Actions Bottom Banner */}
+              <div className="bg-slate-950 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-white">¿Listo para publicar los cambios?</h4>
+                    <p className="text-[11px] text-slate-400">Pulsa guardar para que los 3 botones se actualicen de inmediato en la Landing Page.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={onNavigateToLanding}
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <Eye className="w-4 h-4 text-teal-400" />
+                    <span>Ver Landing</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer ${
+                      saveSuccess 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                    }`}
+                  >
+                    {saving ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : saveSuccess ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>{saving ? 'Guardando...' : saveSuccess ? '¡Guardado con Éxito!' : 'Guardar Todos los Botones'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --------------------------------------------------------------------- */}
+        {/* TAB 2: HERO & SLIDER DE IMÁGENES                                      */}
         {/* --------------------------------------------------------------------- */}
         {activeTab === 'hero' && (
           <div className="space-y-6">
@@ -505,9 +879,12 @@ export default function AdminLandingPage({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-300">
-                    Texto del Botón Principal
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                      Texto del Botón Diapositiva #1 (Hero Principal)
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-bold">Imagen #1</span>
+                  </div>
                   <input
                     type="text"
                     value={formData.heroCtaText}
@@ -515,12 +892,18 @@ export default function AdminLandingPage({
                     placeholder="👉 Solicitar Cotización Gratis por WhatsApp"
                     className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-emerald-500"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    💡 Para configurar los botones de las 3 imágenes de forma independiente, edítalos a continuación o en la pestaña <strong>"1. Botones del Slider"</strong>.
+                  </p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-300">
-                    Enlace de Acción (WhatsApp / URL)
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                      Enlace de Acción Diapositiva #1
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono">#contacto o URL</span>
+                  </div>
                   <input
                     type="text"
                     value={formData.heroCtaLink}

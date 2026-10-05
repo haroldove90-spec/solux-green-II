@@ -52,11 +52,13 @@ import {
   RefreshCw,
   LogIn,
   SlidersHorizontal,
-  Sliders
+  Sliders,
+  Save
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import { motion, AnimatePresence } from 'motion/react';
-import { Service, Technician, Material, ServiceType, SolarProject, AppNotification } from '../types';
+import { Service, Technician, Material, ServiceType, SolarProject, AppNotification, LandingConfig, LandingSlide } from '../types';
+import { ensureThreeSlides } from './AdminLandingPage';
 import { SOLUX_LOGO_URL, SOLUX_LOGO_FALLBACK } from '../logoConfig';
 import UserProfileModule from './UserProfileModule';
 import { NotificationsBell } from './NotificationsBell';
@@ -124,6 +126,10 @@ interface AdminDashboardProps {
   onMarkAllNotificationsAsRead: () => void;
   onClearAllNotifications?: () => void;
   onDeleteNotification?: (id: string) => void;
+
+  // Landing page additions
+  landingConfig?: LandingConfig;
+  onUpdateLandingConfig?: (config: LandingConfig) => Promise<boolean>;
 }
 
 export default function AdminDashboard({
@@ -155,8 +161,51 @@ export default function AdminDashboard({
   onMarkNotificationAsRead,
   onMarkAllNotificationsAsRead,
   onClearAllNotifications,
-  onDeleteNotification
+  onDeleteNotification,
+
+  landingConfig,
+  onUpdateLandingConfig
 }: AdminDashboardProps) {
+  // Slider buttons state for the Admin Landingpage tab
+  const [dashSlides, setDashSlides] = useState<LandingSlide[]>(() => {
+    return ensureThreeSlides(landingConfig?.heroSlides);
+  });
+  const [savingDashSlides, setSavingDashSlides] = useState(false);
+  const [saveDashSlidesSuccess, setSaveDashSlidesSuccess] = useState(false);
+
+  useEffect(() => {
+    if (landingConfig?.heroSlides) {
+      setDashSlides(ensureThreeSlides(landingConfig.heroSlides));
+    }
+  }, [landingConfig]);
+
+  const handleUpdateDashSlide = (idx: number, updated: Partial<LandingSlide>) => {
+    setDashSlides(prev => {
+      const next = ensureThreeSlides(prev);
+      next[idx] = { ...next[idx], ...updated };
+      return next;
+    });
+  };
+
+  const handleSaveDashSlides = async () => {
+    if (!onUpdateLandingConfig || !landingConfig) return;
+    setSavingDashSlides(true);
+    try {
+      const updatedConfig: LandingConfig = {
+        ...landingConfig,
+        heroSlides: dashSlides,
+        heroCtaText: dashSlides[0]?.ctaText || landingConfig.heroCtaText,
+        heroCtaLink: dashSlides[0]?.ctaLink || landingConfig.heroCtaLink
+      };
+      await onUpdateLandingConfig(updatedConfig);
+      setSaveDashSlidesSuccess(true);
+      setTimeout(() => setSaveDashSlidesSuccess(false), 3000);
+    } catch (e) {
+      console.warn('Error saving slider buttons from AdminDashboard:', e);
+    } finally {
+      setSavingDashSlides(false);
+    }
+  };
   const isRealImage = (url?: string) => {
     return !!url && url.trim() !== '' && !url.includes('placeholder') && !url.includes('PLACEHOLDER') && (url.startsWith('http') || url.startsWith('data:'));
   };
@@ -5769,6 +5818,174 @@ Mensaje: ${formattedBody}
                           <span>Abrir Editor Completo (CMS)</span>
                         </button>
                       )}
+                    </div>
+                  </div>
+
+                  {/* --- CONTROL INDEPENDIENTE DE LOS BOTONES DE LAS 3 IMÁGENES DEL SLIDER --- */}
+                  <div className="bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 space-y-6 text-white shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                      <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-1.5 border border-emerald-500/30">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Control Total e Independiente</span>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black uppercase text-white tracking-tight flex items-center gap-2">
+                          <span>Botones de las 3 Imágenes del Slider Hero</span>
+                        </h3>
+                        <p className="text-xs text-slate-300 font-medium">
+                          Modifica aquí de forma independiente el texto, enlace de destino (WhatsApp o formulario) y colores de cada botón.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveDashSlides}
+                        disabled={savingDashSlides}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all cursor-pointer shrink-0 ${
+                          saveDashSlidesSuccess 
+                            ? 'bg-emerald-500 text-white' 
+                            : 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                        }`}
+                      >
+                        {savingDashSlides ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : saveDashSlidesSuccess ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        <span>{savingDashSlides ? 'Guardando...' : saveDashSlidesSuccess ? '¡Guardado con Éxito!' : 'Guardar Cambios de Botones'}</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                      {[0, 1, 2].map((slideIndex) => {
+                        const s = dashSlides[slideIndex] || {
+                          id: `slide_${slideIndex + 1}`,
+                          imageUrl: '',
+                          title: `Diapositiva #${slideIndex + 1}`,
+                          ctaText: slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : slideIndex === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
+                          ctaLink: slideIndex === 2 ? 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' : '#contacto',
+                          ctaBgColor: slideIndex === 2 ? '#e11d48' : slideIndex === 1 ? '#0284c7' : '#059669',
+                          ctaTextColor: '#ffffff'
+                        };
+
+                        return (
+                          <div 
+                            key={`dash_btn_ctrl_${slideIndex}`}
+                            className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 relative flex flex-col justify-between"
+                          >
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-mono font-bold">
+                                    {slideIndex + 1}
+                                  </span>
+                                  <span>Botón Imagen #{slideIndex + 1}</span>
+                                </span>
+
+                                <span className="text-[9px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-bold">
+                                  {slideIndex === 2 ? 'Asesor de Enlace' : slideIndex === 1 ? 'Comercial' : 'Residencial'}
+                                </span>
+                              </div>
+
+                              {/* Texto del Botón */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block">
+                                  Texto del Botón *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={s.ctaText || ''}
+                                  onChange={(e) => handleUpdateDashSlide(slideIndex, { ctaText: e.target.value })}
+                                  placeholder={slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : 'Texto del botón...'}
+                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-black text-white focus:outline-none focus:border-emerald-500"
+                                />
+                              </div>
+
+                              {/* Enlace o Destino del Botón */}
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block">
+                                  Enlace o Destino (Acción)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={s.ctaLink || ''}
+                                  onChange={(e) => handleUpdateDashSlide(slideIndex, { ctaLink: e.target.value })}
+                                  placeholder="#contacto o URL"
+                                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                                />
+
+                                {/* Botones de Selección Rápida de Enlace */}
+                                <div className="flex flex-wrap gap-1 pt-1">
+                                  {[
+                                    { label: 'WhatsApp Asesor Enlace', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' },
+                                    { label: '#contacto (Formulario)', url: '#contacto' },
+                                    { label: 'WhatsApp Cotizar Negocio', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20para%20mi%20empresa' },
+                                    { label: 'WhatsApp Cotizar Hogar', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20un%20sistema%20de%20paneles%20solares' }
+                                  ].map(preset => (
+                                    <button
+                                      key={preset.url}
+                                      type="button"
+                                      onClick={() => handleUpdateDashSlide(slideIndex, { ctaLink: preset.url })}
+                                      className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded cursor-pointer transition-all border ${
+                                        s.ctaLink === preset.url
+                                          ? 'bg-emerald-600 text-white border-emerald-500'
+                                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+                                      }`}
+                                    >
+                                      {preset.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Color de Fondo y de Texto */}
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-extrabold uppercase text-slate-400 block">Color Fondo</label>
+                                  <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-700">
+                                    <input
+                                      type="color"
+                                      value={s.ctaBgColor || '#059669'}
+                                      onChange={(e) => handleUpdateDashSlide(slideIndex, { ctaBgColor: e.target.value })}
+                                      className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                                    />
+                                    <span className="text-[10px] font-mono text-slate-300 font-bold">{s.ctaBgColor || '#059669'}</span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-extrabold uppercase text-slate-400 block">Color Texto</label>
+                                  <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-700">
+                                    <input
+                                      type="color"
+                                      value={s.ctaTextColor || '#ffffff'}
+                                      onChange={(e) => handleUpdateDashSlide(slideIndex, { ctaTextColor: e.target.value })}
+                                      className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                                    />
+                                    <span className="text-[10px] font-mono text-slate-300 font-bold">{s.ctaTextColor || '#ffffff'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Live Button Preview Box */}
+                            <div className="pt-2 border-t border-slate-800 text-center space-y-1">
+                              <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Vista Previa del Botón:</span>
+                              <div
+                                style={{
+                                  backgroundColor: s.ctaBgColor || '#059669',
+                                  color: s.ctaTextColor || '#ffffff'
+                                }}
+                                className="py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider shadow truncate"
+                              >
+                                {s.ctaText || 'Botón sin texto'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 

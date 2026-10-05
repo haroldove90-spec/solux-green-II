@@ -119,17 +119,18 @@ export default function LandingPageView({
     }
   };
 
-  // Resolver for slide CTA links (linking "Quiero ser Asesor de Enlace" to WhatsApp info)
+  // Resolver for slide CTA links
   const getSlideCtaLink = (slide?: LandingSlide) => {
     if (!slide) return config.heroCtaLink || '#contacto';
+    if (slide.ctaLink && slide.ctaLink.trim() !== '') {
+      return slide.ctaLink;
+    }
     const text = (slide.ctaText || '').toLowerCase();
     const isEnlace = text.includes('enlace') || text.includes('asesor') || slide.id === 'slide_3';
     if (isEnlace) {
-      if (!slide.ctaLink || slide.ctaLink === '#contacto' || !slide.ctaLink.startsWith('http') || slide.ctaLink.includes('wa.me')) {
-        return 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
-      }
+      return 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
     }
-    return slide.ctaLink || config.heroCtaLink || '#contacto';
+    return config.heroCtaLink || '#contacto';
   };
 
   const handleProspectFormSubmit = (e: React.FormEvent) => {
@@ -405,8 +406,12 @@ export default function LandingPageView({
               {(() => {
                 const targetLink = getSlideCtaLink(currentSlide);
                 const isExternal = targetLink.startsWith('http');
-                const isSlide3OrEnlace = currentSlide?.id === 'slide_3' || (currentSlide?.ctaText || '').toLowerCase().includes('enlace');
-                const buttonBg = currentSlide?.ctaBgColor || (isSlide3OrEnlace ? '#e11d48' : config.styles?.primaryBtnColor || '#059669');
+                const isSlide3 = currentSlide?.id === 'slide_3';
+                const buttonText = currentSlide?.ctaText && currentSlide.ctaText.trim() !== ''
+                  ? currentSlide.ctaText
+                  : (isSlide3 ? '🚀 Quiero ser Asesor de Enlace' : config.heroCtaText || '👉 Solicitar Cotización');
+                const buttonBg = currentSlide?.ctaBgColor || (isSlide3 ? '#e11d48' : config.styles?.primaryBtnColor || '#059669');
+                const buttonTextColor = currentSlide?.ctaTextColor || '#ffffff';
 
                 return (
                   <a
@@ -422,11 +427,11 @@ export default function LandingPageView({
                     rel={isExternal ? 'noopener noreferrer' : undefined}
                     style={{ 
                       backgroundColor: buttonBg,
-                      color: currentSlide?.ctaTextColor || '#ffffff'
+                      color: buttonTextColor
                     }}
                     className="px-8 py-4 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
                   >
-                    <span>{currentSlide?.ctaText || (isSlide3OrEnlace ? '🚀 Quiero ser Asesor de Enlace' : config.heroCtaText || '👉 Solicitar Cotización')}</span>
+                    <span>{buttonText}</span>
                   </a>
                 );
               })()}

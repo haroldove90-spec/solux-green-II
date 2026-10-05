@@ -448,9 +448,9 @@ function App() {
               const cleanSlide = { ...s };
               delete cleanSlide.secondaryCtaText;
               delete cleanSlide.secondaryCtaLink;
-              if (idx === 2 || cleanSlide.id === 'slide_3' || (cleanSlide.ctaText || '').toLowerCase().includes('enlace')) {
+              if (idx === 2 || cleanSlide.id === 'slide_3') {
                 cleanSlide.ctaText = cleanSlide.ctaText || '🚀 Quiero ser Asesor de Enlace';
-                cleanSlide.ctaLink = 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
+                cleanSlide.ctaLink = cleanSlide.ctaLink || 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
                 cleanSlide.ctaBgColor = cleanSlide.ctaBgColor || '#e11d48';
               }
               return cleanSlide;
@@ -2402,34 +2402,6 @@ function App() {
       </>
     );
   };
-
-  if (activeRole === 'landingpage') {
-    return (
-      <div className="min-h-screen bg-white flex flex-col font-sans relative antialiased" id="landingpage-portal-root">
-        {renderAdminSwitcher()}
-        <LandingPageView 
-          config={landingConfig}
-          onNavigateToAdmin={() => setActiveRole('landingadmin')}
-          onNavigateToPortal={() => setActiveRole(null)}
-        />
-      </div>
-    );
-  }
-
-  if (activeRole === 'landingadmin') {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col font-sans relative antialiased" id="landingadmin-portal-root">
-        {renderAdminSwitcher()}
-        <AdminLandingPage 
-          config={landingConfig}
-          onSaveConfig={handleUpdateLandingConfig}
-          onNavigateToLanding={() => setActiveRole('landingpage')}
-          onNavigateToPortal={() => setActiveRole(null)}
-          isOfflineMode={isOfflineMode}
-        />
-      </div>
-    );
-  }
 
   if (activeRole === 'admin') {
     return (
