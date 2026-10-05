@@ -234,7 +234,7 @@ export interface User {
   email?: string;
   password?: string;
   pin?: string;
-  role: 'admin' | 'comercial' | 'tech' | 'partner' | 'enlace' | 'client' | 'landingpage' | 'public_client_reg' | string;
+  role: 'admin' | 'landingadmin' | 'comercial' | 'tech' | 'partner' | 'enlace' | 'client' | 'landingpage' | 'public_client_reg' | string;
   fullName?: string;
   parentId?: string;
   whatsapp?: string;

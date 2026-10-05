@@ -283,6 +283,22 @@ export default function LandingPageView({
                 </button>
               )}
             </>
+          ) : currentUser?.role === 'landingadmin' ? (
+            <>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-900/60 border border-amber-500/40 text-amber-200 text-[10px] font-black uppercase">
+                🌐 Admin Landing
+              </span>
+              {onNavigateToAdmin && (
+                <button
+                  onClick={onNavigateToAdmin}
+                  className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                  title="Ir al Panel de Edición de la Landing Page"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>CMS Landing</span>
+                </button>
+              )}
+            </>
           ) : (
             /* Final user: only see button to access the system with credentials */
             onNavigateToPortal && (

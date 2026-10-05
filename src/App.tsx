@@ -176,6 +176,7 @@ export class AppErrorBoundary extends (React.Component as any)<ErrorBoundaryProp
 export const INITIAL_SYSTEM_USERS = [
   { id: 'usr_walter', username: 'walter_admin', email: 'walter@soluxgreen.com.mx', password: 'Chevropar#1970', role: 'admin', fullName: 'Walter', parentId: null, whatsapp: '2293233633', avatar: '' },
   { id: 'usr_1', username: 'admin', email: 'admin@soluxgreen.com.mx', password: 'password123', role: 'admin', fullName: 'Administrador General', whatsapp: '', avatar: '' },
+  { id: 'usr_landing_admin', username: 'adminlanding', email: 'landing@soluxgreen.com.mx', password: 'password123', role: 'landingadmin', fullName: 'Administrador de Landing Page', parentId: null, whatsapp: '', avatar: '' },
   { id: 'usr_gustavo', username: 'Gustavo', email: 'gerente@massmercadeo.com.mx', password: 'SOLUX2026', role: 'admin', fullName: 'Gustavo Luna', parentId: null, whatsapp: '', avatar: '' },
   { id: 'usr_harold', username: 'harold_anguiano', email: 'haroldo90@hotmail.com', password: 'Chevropar#1970', role: 'admin', fullName: 'Harold Anguiano', parentId: null, whatsapp: '', avatar: '' },
   { id: 'usr_jose', username: 'jose_cagal', email: 'director@massmercadeo.com', password: 'MassMercadeo#2026!', role: 'admin', fullName: 'Jose cagal García', parentId: null, whatsapp: '', avatar: '' },
@@ -258,14 +259,15 @@ export function deduplicateUsers(list: any[]): any[] {
   return Array.from(finalMap.values());
 }
 
-export function sanitizeUserRole(role: any): 'admin' | 'comercial' | 'enlace' | 'partner' | 'client' {
+export function sanitizeUserRole(role: any): 'admin' | 'landingadmin' | 'comercial' | 'enlace' | 'partner' | 'client' {
   if (!role || typeof role !== 'string') return 'comercial';
   const clean = role.trim().toLowerCase();
+  if (['landingadmin', 'adminlanding', 'admin_landing', 'administrador landing', 'administrador landingpage', 'landing_admin'].includes(clean)) return 'landingadmin';
   if (['comercial', 'asesor', 'asesor verde', 'vendedor'].includes(clean)) return 'comercial';
   if (['enlace', 'referido', 'asesor de enlace'].includes(clean)) return 'enlace';
   if (['admin', 'administrador', 'general'].includes(clean)) return 'admin';
   if (['partner', 'tech', 'instalador', 'socio'].includes(clean)) return 'partner';
-  if (['client', 'cliente', 'landingpage'].includes(clean)) return 'client';
+  if (['client', 'cliente'].includes(clean)) return 'client';
   return 'comercial';
 }
 

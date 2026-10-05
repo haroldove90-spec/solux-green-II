@@ -6,7 +6,7 @@ import {
   HelpCircle, MessageSquare, Phone, Mail, MapPin, 
   Sliders, ArrowLeft, ExternalLink, Database, Copy, 
   CheckCircle2, AlertTriangle, Layers, Info, ShieldCheck,
-  ChevronRight, RefreshCw, SlidersHorizontal, Clock
+  ChevronRight, RefreshCw, SlidersHorizontal, Clock, LogOut
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
 import { uploadLandingImageToSupabase } from '../supabaseService';
@@ -38,6 +38,8 @@ interface AdminLandingPageProps {
   onSaveConfig: (newConfig: LandingConfig) => Promise<boolean>;
   onNavigateToLanding: () => void;
   onNavigateToPortal: () => void;
+  onExit?: () => void;
+  currentUser?: any;
   isOfflineMode?: boolean;
 }
 
@@ -109,6 +111,8 @@ export default function AdminLandingPage({
   onSaveConfig,
   onNavigateToLanding,
   onNavigateToPortal,
+  onExit,
+  currentUser,
   isOfflineMode = false
 }: AdminLandingPageProps) {
   const [formData, setFormData] = useState<LandingConfig>(() => ({
@@ -354,14 +358,25 @@ export default function AdminLandingPage({
       {/* ========================================================================= */}
       <header className="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shadow-md">
         <div className="flex items-center gap-3">
-          <button
-            onClick={onNavigateToPortal}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700 flex items-center gap-1.5 text-xs font-bold"
-            title="Volver al Portal Multi-Rol"
-          >
-            <ArrowLeft className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Menú Multi-Rol</span>
-          </button>
+          {currentUser?.role === 'landingadmin' ? (
+            <button
+              onClick={onExit || onNavigateToPortal}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700 flex items-center gap-1.5 text-xs font-bold"
+              title="Cerrar sesión de administrador de landing"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
+          ) : (
+            <button
+              onClick={onNavigateToPortal}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700 flex items-center gap-1.5 text-xs font-bold"
+              title="Volver al Panel Administrador"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Panel Admin</span>
+            </button>
+          )}
 
           <div className="h-6 w-px bg-slate-800 hidden sm:block" />
 

@@ -1236,7 +1236,7 @@ ${buildWhatsAppFinancialSummary(
     email: '',
     fullName: '',
     password: '',
-    role: 'comercial' as 'admin' | 'comercial' | 'enlace' | 'partner',
+    role: 'comercial' as 'admin' | 'landingadmin' | 'comercial' | 'enlace' | 'partner',
     parentId: '', // parent user for hierachy
     whatsapp: '', // whatsapp field
     prospectingAreas: '', // Área(s) de prospectación
@@ -1498,6 +1498,8 @@ ${buildWhatsAppFinancialSummary(
   const getWhatsAppShareLink = (user: any) => {
     const roleName = user.role === 'admin' 
       ? 'Administrador General' 
+      : user.role === 'landingadmin'
+      ? 'Administrador Landingpage'
       : user.role === 'comercial' 
       ? 'Asesor Verde (Comercial)' 
       : user.role === 'enlace' 
@@ -1778,8 +1780,8 @@ Enlace de acceso al sistema: ${window.location.origin}
   const handleOpenAddUser = (initialRole?: any) => {
     setEditingUserId(null);
     setIsUserFormUsernameManuallyEdited(false);
-    const validRole: 'comercial' | 'enlace' | 'admin' | 'partner' = 
-      (typeof initialRole === 'string' && ['comercial', 'enlace', 'admin', 'partner'].includes(initialRole))
+    const validRole: 'comercial' | 'enlace' | 'admin' | 'partner' | 'landingadmin' = 
+      (typeof initialRole === 'string' && ['comercial', 'enlace', 'admin', 'partner', 'landingadmin'].includes(initialRole))
         ? (initialRole as any)
         : 'comercial';
     setUserForm({
@@ -1813,8 +1815,8 @@ Enlace de acceso al sistema: ${window.location.origin}
   const handleOpenEditUser = (user: any) => {
     setEditingUserId(user.id);
     setIsUserFormUsernameManuallyEdited(true);
-    const validRole: 'comercial' | 'enlace' | 'admin' | 'partner' = 
-      (typeof user.role === 'string' && ['comercial', 'enlace', 'admin', 'partner'].includes(user.role))
+    const validRole: 'comercial' | 'enlace' | 'admin' | 'partner' | 'landingadmin' = 
+      (typeof user.role === 'string' && ['comercial', 'enlace', 'admin', 'partner', 'landingadmin'].includes(user.role))
         ? (user.role as any)
         : 'comercial';
     setUserForm({
@@ -1882,8 +1884,8 @@ Enlace de acceso al sistema: ${window.location.origin}
       return;
     }
 
-    const cleanRole: 'comercial' | 'enlace' | 'admin' | 'partner' = 
-      (typeof userForm.role === 'string' && ['comercial', 'enlace', 'admin', 'partner'].includes(userForm.role))
+    const cleanRole: 'comercial' | 'enlace' | 'admin' | 'partner' | 'landingadmin' = 
+      (typeof userForm.role === 'string' && ['comercial', 'enlace', 'admin', 'partner', 'landingadmin'].includes(userForm.role))
         ? (userForm.role as any)
         : 'comercial';
 
@@ -1903,7 +1905,7 @@ Enlace de acceso al sistema: ${window.location.origin}
         updatedAt: new Date().toISOString()
       };
       onUpdateUsers([updatedUser, ...users.filter(u => u.id !== editingUserId)]);
-      showNotification(`👤 Perfil de ${cleanRole === 'enlace' ? 'Asesor de Enlace' : cleanRole === 'comercial' ? 'Asesor Verde' : cleanRole === 'partner' ? 'Partner de Instalaciones' : 'Administrador General'} actualizado con éxito.`);
+      showNotification(`👤 Perfil de ${cleanRole === 'landingadmin' ? 'Administrador Landingpage' : cleanRole === 'enlace' ? 'Asesor de Enlace' : cleanRole === 'comercial' ? 'Asesor Verde' : cleanRole === 'partner' ? 'Partner de Instalaciones' : 'Administrador General'} actualizado con éxito.`);
       setLastSavedUser(updatedUser);
     } else {
       const nowIso = new Date().toISOString();
@@ -1918,7 +1920,7 @@ Enlace de acceso al sistema: ${window.location.origin}
         createdDate: nowIso
       };
       onUpdateUsers([newUser, ...(users || [])]);
-      showNotification(`👤 Nuevo ${cleanRole === 'enlace' ? 'Asesor de Enlace' : cleanRole === 'comercial' ? 'Asesor Verde' : cleanRole === 'partner' ? 'Partner de Instalaciones' : 'Administrador General'} registrado exitosamente.`);
+      showNotification(`👤 Nuevo ${cleanRole === 'landingadmin' ? 'Administrador Landingpage' : cleanRole === 'enlace' ? 'Asesor de Enlace' : cleanRole === 'comercial' ? 'Asesor Verde' : cleanRole === 'partner' ? 'Partner de Instalaciones' : 'Administrador General'} registrado exitosamente.`);
       setLastSavedUser(newUser);
     }
     setIsUserFormOpen(false);
@@ -3491,6 +3493,17 @@ Mensaje: ${formattedBody}
                               </button>
                               <button
                                 type="button"
+                                onClick={() => setUserForm(prev => ({ ...prev, role: 'landingadmin' }))}
+                                className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase transition-all cursor-pointer ${
+                                  userForm.role === 'landingadmin'
+                                    ? 'bg-amber-600 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                🌐 Admin Landing
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => setUserForm(prev => ({ ...prev, role: 'partner' }))}
                                 className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase transition-all cursor-pointer ${
                                   userForm.role === 'partner'
@@ -3586,7 +3599,7 @@ Mensaje: ${formattedBody}
                                 </select>
                               </div>
 
-                              {/* System Role */}
+                               {/* System Role */}
                               <div className="space-y-1">
                                 <label className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500 block">Rol del Sistema</label>
                                 <select
@@ -3596,6 +3609,7 @@ Mensaje: ${formattedBody}
                                 >
                                   <option value="comercial">Asesor Verde (Comercial)</option>
                                   <option value="enlace">Asesor de Enlace (Referidos)</option>
+                                  <option value="landingadmin">Administrador Landingpage</option>
                                   <option value="admin">Administrador General</option>
                                   <option value="partner">Partner de Instalaciones</option>
                                 </select>
@@ -4092,13 +4106,15 @@ Mensaje: ${formattedBody}
                                     <span className={`inline-block self-start px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
                                       u.role === 'admin'
                                         ? 'bg-violet-50 text-violet-700 border border-violet-100'
+                                        : u.role === 'landingadmin'
+                                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
                                         : u.role === 'comercial'
                                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                                         : u.role === 'enlace'
                                         ? 'bg-blue-50 text-blue-700 border border-blue-100'
                                         : 'bg-teal-50 text-teal-700 border border-teal-100'
                                     }`}>
-                                      {u.role === 'admin' ? 'Administrador' : u.role === 'comercial' ? 'Asesor Verde' : u.role === 'enlace' ? 'Asesor de Enlace' : 'Partner de Instalación'}
+                                      {u.role === 'admin' ? 'Administrador' : u.role === 'landingadmin' ? 'Admin Landing' : u.role === 'comercial' ? 'Asesor Verde' : u.role === 'enlace' ? 'Asesor de Enlace' : 'Partner de Instalación'}
                                     </span>
                                     {parent && (
                                       <span className="text-[8px] text-slate-400 font-normal">
@@ -4109,6 +4125,7 @@ Mensaje: ${formattedBody}
                                 </td>
                                 <td className="p-3 text-slate-600 text-[11px]">
                                   {u.role === 'admin' && <span className="text-slate-400 font-normal">Control total</span>}
+                                  {u.role === 'landingadmin' && <span className="text-amber-700 font-semibold">Solo administra Landing Page</span>}
                                   {u.role === 'comercial' && <span className="text-emerald-700">Gana sobre utilidad directa</span>}
                                   {u.role === 'enlace' && <span className="text-blue-700 font-semibold">$1,000 pesos por referido instalado</span>}
                                   {u.role === 'partner' && <span className="text-teal-700 font-semibold">Costo por levantamiento y obra</span>}
@@ -6272,6 +6289,39 @@ Mensaje: ${formattedBody}
                           }`}
                         >
                           {activeRole === 'client' ? '✓ Simulación Activa' : 'Simular Cliente Final'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Admin Landingpage Card */}
+                    <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex flex-col justify-between shadow-xs transition-all hover:border-amber-300 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-10 flex items-center justify-center">
+                        <Layers className="w-8 h-8 text-amber-400 opacity-20" />
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                            <Layers className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Admin Landingpage</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase bg-amber-100 text-amber-700 border border-amber-200">Exclusivo CMS</span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-bold leading-relaxed">
+                          Gestión exclusiva de la landing page pública: diapositivas, textos, botones, colores y datos de contacto. Sin acceso al CRM ni datos confidenciales.
+                        </p>
+                      </div>
+                      <div className="mt-6">
+                        <button
+                          onClick={() => onChangeRole?.('landingadmin')}
+                          className={`w-full py-2.5 rounded-xl text-[10px] font-extrabold uppercase tracking-wider transition-all duration-150 cursor-pointer text-center ${
+                            activeRole === 'landingadmin'
+                              ? 'bg-amber-50 text-amber-600 border border-amber-200 font-black'
+                              : 'bg-slate-900 hover:bg-amber-600 text-white shadow-md'
+                          }`}
+                        >
+                          {activeRole === 'landingadmin' ? '✓ Estás en esta Vista' : 'Simular Admin Landing'}
                         </button>
                       </div>
                     </div>
