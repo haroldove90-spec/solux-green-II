@@ -174,6 +174,7 @@ export class AppErrorBoundary extends (React.Component as any)<ErrorBoundaryProp
 }
 
 export const INITIAL_SYSTEM_USERS = [
+  { id: 'usr_walter', username: 'walter_admin', email: 'walter@soluxgreen.com.mx', password: 'Chevropar#1970', role: 'admin', fullName: 'Walter', parentId: null, whatsapp: '2293233633', avatar: '' },
   { id: 'usr_1', username: 'admin', email: 'admin@soluxgreen.com.mx', password: 'password123', role: 'admin', fullName: 'Administrador General', whatsapp: '', avatar: '' },
   { id: 'usr_gustavo', username: 'Gustavo', email: 'gerente@massmercadeo.com.mx', password: 'SOLUX2026', role: 'admin', fullName: 'Gustavo Luna', parentId: null, whatsapp: '', avatar: '' },
   { id: 'usr_harold', username: 'harold_anguiano', email: 'haroldo90@hotmail.com', password: 'Chevropar#1970', role: 'admin', fullName: 'Harold Anguiano', parentId: null, whatsapp: '', avatar: '' },
@@ -1118,9 +1119,17 @@ function App() {
     return null;
   });
 
-  const [activeRole, setActiveRole] = useState<'admin' | 'comercial' | 'tech' | 'enlace' | 'client' | 'landingpage' | 'landingadmin' | 'public_client_reg' | 'public_enlace_reg' | null>(() => {
+  const [activeRole, setActiveRole] = useState<'admin' | 'comercial' | 'tech' | 'enlace' | 'client' | 'landingpage' | 'landingadmin' | 'public_client_reg' | 'public_enlace_reg' | 'login' | null>(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
+      if (
+        searchParams.get('vista') === 'login' ||
+        searchParams.get('acceso') === 'portal' ||
+        window.location.pathname === '/login' ||
+        window.location.hash.includes('login')
+      ) {
+        return 'login';
+      }
       if (
         searchParams.get('vista') === 'landing' ||
         window.location.pathname === '/landing' ||
@@ -1161,7 +1170,7 @@ function App() {
       }
     }
     const savedRole = typeof window !== 'undefined' ? localStorage.getItem('solux_active_role') : null;
-    if (savedRole) return savedRole as any;
+    if (savedRole && savedRole !== 'null' && savedRole !== 'undefined') return savedRole as any;
 
     // Fallback: derive role from currentUser if present
     const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem('solux_current_user') : null;
@@ -1179,7 +1188,8 @@ function App() {
         // ignore
       }
     }
-    return null;
+    // Default home page is the landing page
+    return 'landingpage';
   });
 
   React.useEffect(() => {
@@ -1298,7 +1308,7 @@ function App() {
     if (typeof window !== 'undefined' && (window.location.pathname === '/clientes' || window.location.href.includes('/clientes') || window.location.hash === '#/clientes' || window.location.hash.includes('clientes'))) {
       setActiveRole('public_client_reg');
     } else {
-      setActiveRole(null);
+      setActiveRole('landingpage');
     }
   }, []);
 
@@ -2562,7 +2572,9 @@ function App() {
         <LandingPageView 
           config={landingConfig}
           onNavigateToAdmin={() => setActiveRole('landingadmin')}
-          onNavigateToPortal={() => setActiveRole(null)}
+          onNavigateToPortal={() => setActiveRole('login')}
+          onAddSolarProject={handleAddSolarProject}
+          soluxConfig={soluxConfig}
         />
       </div>
     );
@@ -2576,7 +2588,7 @@ function App() {
           config={landingConfig}
           onSaveConfig={handleUpdateLandingConfig}
           onNavigateToLanding={() => setActiveRole('landingpage')}
-          onNavigateToPortal={() => setActiveRole(null)}
+          onNavigateToPortal={() => setActiveRole('login')}
           isOfflineMode={isOfflineMode}
         />
       </div>
@@ -2670,6 +2682,19 @@ function App() {
             className="w-full flex flex-col items-center justify-center max-w-2xl mx-auto space-y-6"
             id="login-portal-container"
           >
+            {/* Top Navigation to return to Landing Page */}
+            <div className="w-full flex items-center justify-between pb-1">
+              <button
+                type="button"
+                onClick={() => setActiveRole('landingpage')}
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs hover:border-emerald-300"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Volver a la Página de Inicio</span>
+              </button>
+              <span className="text-[10px] font-black uppercase text-slate-400 font-mono">Solux Green 2026</span>
+            </div>
+
             {/* Logo Centered Above the Form */}
             <div className="flex justify-center mb-1">
               <img 

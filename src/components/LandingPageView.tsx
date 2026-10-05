@@ -5,21 +5,27 @@ import {
   ArrowRight, Phone, Mail, MapPin, MessageSquare, ChevronDown, 
   ChevronUp, ExternalLink, Settings, ArrowLeft, ChevronLeft, 
   ChevronRight, Sparkles, FileText, Clock, Wrench, Cpu, 
-  TrendingDown, DollarSign, Layers, Check
+  TrendingDown, DollarSign, Layers, Check, Camera, User, Send,
+  AlertTriangle, RotateCcw
 } from 'lucide-react';
-import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
+import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat, SolarProject } from '../types';
 import { SOLUX_LOGO_FALLBACK } from '../logoConfig';
+import { calculateSoluxFinancing, formatPaymentMethod } from '../financingUtils';
 
 interface LandingPageViewProps {
   config: LandingConfig;
   onNavigateToAdmin?: () => void;
   onNavigateToPortal?: () => void;
+  onAddSolarProject?: (project: SolarProject) => void;
+  soluxConfig?: any;
 }
 
 export default function LandingPageView({
   config,
   onNavigateToAdmin,
-  onNavigateToPortal
+  onNavigateToPortal,
+  onAddSolarProject,
+  soluxConfig
 }: LandingPageViewProps) {
   // Slider State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -27,6 +33,41 @@ export default function LandingPageView({
 
   // FAQ Accordion State
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(config.faqs?.[0]?.id || null);
+
+  // Formulario de Contacto / Prospecto Solar (Replicado de Asesor Verde)
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formMunicipality, setFormMunicipality] = useState('');
+  const [formMapsUrl, setFormMapsUrl] = useState('');
+  const [formBill, setFormBill] = useState<number | string>(3500);
+  const [formSpace, setFormSpace] = useState<string>('');
+  const [formMeters, setFormMeters] = useState<string>('1');
+  const [formCFE, setFormCFE] = useState<'activo_sin_adeudo' | 'con_adeudo' | 'inactivo'>('activo_sin_adeudo');
+  const [formOwnership, setFormOwnership] = useState<'propietario' | 'arrendatario_autorizado'>('propietario');
+  const [formPayMethod, setFormPayMethod] = useState<string>('contado');
+  const [formLoads, setFormLoads] = useState<string[]>([]);
+  const [formWires, setFormWires] = useState<number>(2);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [lastWhatsAppUrl, setLastWhatsAppUrl] = useState<string>('');
+
+  // Cálculo de paneles según fórmula oficial Solux Green: (Monto CFE / 1000) * 2
+  const calculatePanels = (bill: number) => {
+    if (!bill || bill <= 0) return 0;
+    const rawPanels = (bill / 1000) * 2;
+    const decimalPart = rawPanels - Math.floor(rawPanels);
+    return Math.max(1, decimalPart >= 0.1 ? Math.ceil(rawPanels) : Math.floor(rawPanels));
+  };
+
+  const activePanelPrice = Number(soluxConfig?.panelBasePrice) || 11000;
+  const billNum = Number(formBill) || 0;
+  const estimatedPanelsCount = calculatePanels(billNum);
+  const baseInvestment = estimatedPanelsCount * activePanelPrice;
+  const finCalc = calculateSoluxFinancing(baseInvestment, formPayMethod, soluxConfig);
+  const bimestralSavings = Math.round(billNum * 0.95);
+  const annualSavings = bimestralSavings * 6;
+  const roiYears = annualSavings > 0 ? (finCalc.isContado ? finCalc.netInvestment : finCalc.totalWithInterest) / annualSavings : 0;
 
   // Auto-play for Hero Slider
   useEffect(() => {
@@ -76,6 +117,100 @@ export default function LandingPageView({
       case 'justify': return 'text-justify';
       default: return 'text-left';
     }
+  };
+
+  const handleProspectFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formPhone.trim() || !formMunicipality.trim()) {
+      alert('⚠️ Por favor completa los campos obligatorios: Nombre, Teléfono Celular y Municipio.');
+      return;
+    }
+
+    setFormSubmitting(true);
+
+    const safeBillNum = Number(formBill) || 0;
+    const panels = calculatePanels(safeBillNum);
+    const investment = panels * activePanelPrice;
+    const kwp = ((panels * 550) / 1000).toFixed(2);
+    const fin = calculateSoluxFinancing(investment, formPayMethod, soluxConfig);
+    const payMethodLabel = formatPaymentMethod(formPayMethod);
+
+    const whatsappMessage = `☀️ *SOLICITUD DE PROSPECTO SOLAR - SOLUX GREEN* ☀️
+
+👤 *DATOS DEL CLIENTE:*
+• Nombre: *${formName.trim()}*
+• Teléfono / WhatsApp: *${formPhone.trim()}*
+• Correo Electrónico: *${formEmail.trim() || 'No especificado'}*
+• Municipio y Estado: *${formMunicipality.trim()}*
+• Ubicación Maps: ${formMapsUrl.trim() || 'No especificada'}
+
+⚡ *INFORMACIÓN ELÉCTRICA Y DEL INMUEBLE:*
+• Pago CFE Promedio: *$${safeBillNum.toLocaleString('es-MX')} MXN* bimestral
+• Espacio Disponible en Techo: *${formSpace ? `${formSpace} m²` : 'Por verificar en sitio'}*
+• Número de Medidores CFE: *${formMeters || '1'}*
+• Estatus de Servicio CFE: *${formCFE === 'activo_sin_adeudo' ? 'Activo sin Adeudo' : formCFE === 'con_adeudo' ? 'Con Adeudo' : 'Inactivo / Nuevo Contrato'}*
+• Validación de Propiedad: *${formOwnership === 'propietario' ? 'Propietario del Inmueble' : 'Arrendatario Autorizado'}*
+• Número de Hilos en Acometida: *${formWires} Hilos*
+• Cargas Especiales: *${formLoads.length > 0 ? formLoads.join(', ') : 'Ninguna seleccionada'}*
+
+📊 *ESTIMACIÓN PRELIMINAR SOLUX GREEN:*
+• Paneles Sugeridos: *${panels} Módulos Fotovoltaicos* (~${kwp} kWp)
+• Inversión Preliminar: *$${investment.toLocaleString('es-MX')} MXN*
+• Esquema de Pago: *${payMethodLabel}*
+• Enganche Estimado (${fin.downPercent}%): *$${fin.downPayment.toLocaleString('es-MX')} MXN*
+• Ahorro Estimado: *Hasta 98% en recibo de CFE*
+
+📸 *ADVERTENCIA / EVIDENCIAS:*
+⚠️ *Toma foto de tu recibo de luz, medidor, etc y envíales por este medio.*
+(Por favor envía tus fotos por este medio para que nuestro equipo técnico elabore tu diseño y cotización definitiva).`;
+
+    const targetNumber = '5212293233633';
+    const waUrl = `https://wa.me/${targetNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    setLastWhatsAppUrl(waUrl);
+
+    if (onAddSolarProject) {
+      try {
+        const newProj: SolarProject = {
+          id: `proj_web_${Date.now()}`,
+          clientName: formName.trim(),
+          clientPhone: formPhone.trim(),
+          clientEmail: formEmail.trim() || undefined,
+          whatsappPhone: formPhone.trim(),
+          googleMapsUrl: formMapsUrl.trim() || undefined,
+          municipalityState: formMunicipality.trim(),
+          electricalLoadType: formLoads,
+          wiresCount: formWires,
+          averageBill: safeBillNum,
+          availableSpace: Number(formSpace) || Number((panels * 2.88).toFixed(2)),
+          metersCount: Number(formMeters) || 1,
+          cfeStatus: formCFE,
+          paymentMethodDesired: formPayMethod,
+          propertyOwnership: formOwnership,
+          estimatedPanels: panels,
+          requiredArea: Number((panels * 2.88).toFixed(2)),
+          voltageAlert220v: panels > 4,
+          voltageUpgradeQuoted: panels > 4,
+          totalInvestment: investment,
+          siteSurveyPaid: false,
+          siteSurveyStatus: 'pendiente',
+          status: 'validacion',
+          evidence: {},
+          payments: [],
+          createdDate: new Date().toISOString().split('T')[0],
+          createdBy: 'landing_web',
+          createdByRole: 'client',
+          advisorName: 'Equipo Solux Green',
+          advisorPhone: '229 323 3633'
+        };
+        onAddSolarProject(newProj);
+      } catch (err) {
+        console.warn('Error saving prospect from landing:', err);
+      }
+    }
+
+    window.open(waUrl, '_blank');
+    setFormSuccess(true);
+    setFormSubmitting(false);
   };
 
   const currentSlide = slides[currentSlideIndex] || slides[0];
@@ -247,7 +382,7 @@ export default function LandingPageView({
               {currentSlide?.subtitle || config.heroSubtitle}
             </motion.p>
 
-            {/* Llamado a la Acción (CTA Principal) */}
+            {/* Llamado a la Acción (CTA Principal por Diapositiva) */}
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -255,14 +390,48 @@ export default function LandingPageView({
               className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
             >
               <a
-                href={config.heroCtaLink || getCleanWhatsappUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
-                className="px-8 py-4 text-white rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                href={currentSlide?.ctaLink || config.heroCtaLink || '#contacto'}
+                onClick={(e) => {
+                  const targetLink = currentSlide?.ctaLink || config.heroCtaLink || '#contacto';
+                  if (targetLink.startsWith('#')) {
+                    e.preventDefault();
+                    const el = document.querySelector(targetLink);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                target={currentSlide?.ctaLink?.startsWith('http') ? '_blank' : undefined}
+                rel={currentSlide?.ctaLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                style={{ 
+                  backgroundColor: currentSlide?.ctaBgColor || config.styles?.primaryBtnColor || '#059669',
+                  color: currentSlide?.ctaTextColor || '#ffffff'
+                }}
+                className="px-8 py-4 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
               >
-                <span>{config.heroCtaText || '👉 Solicitar Cotización Gratis por WhatsApp'}</span>
+                <span>{currentSlide?.ctaText || config.heroCtaText || '👉 Solicitar Cotización'}</span>
               </a>
+
+              {currentSlide?.secondaryCtaText && (
+                <a
+                  href={currentSlide.secondaryCtaLink || '#contacto'}
+                  onClick={(e) => {
+                    const targetLink = currentSlide.secondaryCtaLink || '#contacto';
+                    if (targetLink.startsWith('#')) {
+                      e.preventDefault();
+                      const el = document.querySelector(targetLink);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  target={currentSlide.secondaryCtaLink?.startsWith('http') ? '_blank' : undefined}
+                  rel={currentSlide.secondaryCtaLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  style={{
+                    backgroundColor: currentSlide.secondaryCtaBgColor || 'rgba(255, 255, 255, 0.15)',
+                    color: currentSlide.secondaryCtaTextColor || '#ffffff'
+                  }}
+                  className="px-6 py-4 rounded-2xl text-sm sm:text-base font-bold uppercase tracking-wider text-center border border-white/20 backdrop-blur-md hover:bg-white/25 active:scale-98 transition-all flex items-center justify-center cursor-pointer"
+                >
+                  <span>{currentSlide.secondaryCtaText}</span>
+                </a>
+              )}
             </motion.div>
 
             {/* Texto de confianza */}
@@ -525,6 +694,443 @@ export default function LandingPageView({
           <p className="text-xs text-emerald-200/80 font-bold uppercase tracking-wider">
             Respuesta promedio: 15 minutos • Sin costo de estudio inicial
           </p>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN DE CONTACTO: REGISTRAR PROSPECTO SOLAR (REPLICADO DE ASESOR VERDE)*/}
+      {/* ========================================================================= */}
+      <section 
+        id="contacto" 
+        className="py-20 lg:py-28 bg-slate-50 border-t border-slate-200 scroll-mt-20"
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          
+          <div className="text-center space-y-3">
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/80 border border-emerald-300 px-4 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow-xs">
+              <Zap className="w-3.5 h-3.5 text-emerald-600" />
+              Solicita Información • Cotización y Registro de Prospecto
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">
+              Calcula tus Paneles Solares y Solicita tu Estudio
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base font-medium max-w-2xl mx-auto leading-relaxed">
+              Completa la información técnica básica de tu inmueble. Al enviar el formulario recibirás tu cálculo preliminar de inmediato y se enviará a nuestro WhatsApp oficial para asesorarte paso a paso.
+            </p>
+          </div>
+
+          {/* Form Container */}
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl space-y-6" id="formulario-prospecto">
+            
+            {/* Form Success State */}
+            {formSuccess ? (
+              <div className="text-center py-10 space-y-5 animate-fadeIn">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+                  <CheckCircle2 className="w-9 h-9" />
+                </div>
+                <div className="space-y-2 max-w-lg mx-auto">
+                  <h3 className="text-2xl font-black uppercase text-slate-900">¡Información Registrada con Éxito!</h3>
+                  <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                    Hemos preparado tu resumen de generación solar con <strong>{estimatedPanelsCount} paneles solares</strong> y ahorro de hasta el 98% en tu recibo de CFE.
+                  </p>
+                </div>
+
+                {/* Warning Reminder in Success Modal */}
+                <div className="max-w-md mx-auto p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-left space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-900 font-black text-xs uppercase">
+                    <Camera className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Recordatorio Importante:</span>
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed font-bold">
+                    📸 Toma foto de tu recibo de luz, medidor, etc y envíales por este medio.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                  {lastWhatsAppUrl && (
+                    <a
+                      href={lastWhatsAppUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
+                    >
+                      <MessageSquare className="w-4 h-4 fill-white" />
+                      <span>Abrir WhatsApp (+52 1 229 323 3633)</span>
+                    </a>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormSuccess(false);
+                      setFormName('');
+                      setFormPhone('');
+                      setFormEmail('');
+                      setFormMunicipality('');
+                      setFormMapsUrl('');
+                      setFormSpace('');
+                    }}
+                    className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Llenar Otro Registro</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleProspectFormSubmit} className="space-y-6">
+                
+                {/* 1. Datos Generales del Cliente */}
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <User className="w-4 h-4 text-emerald-600" />
+                    <span>1. Datos del Cliente / Contacto</span>
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Nombre Completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formName}
+                        onChange={e => setFormName(e.target.value)}
+                        placeholder="Ej. Roberto Sánchez Ruiz"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Teléfono Celular (WhatsApp) *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formPhone}
+                        onChange={e => setFormPhone(e.target.value)}
+                        placeholder="Ej. 229 123 4567"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Correo Electrónico *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formEmail}
+                        onChange={e => setFormEmail(e.target.value)}
+                        placeholder="Ej. contacto@cliente.com"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Municipio y Estado *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formMunicipality}
+                        onChange={e => setFormMunicipality(e.target.value)}
+                        placeholder="Ej. Boca del Río, Veracruz"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Enlace de Ubicación Google Maps (Opcional)
+                      </label>
+                      <input
+                        type="url"
+                        value={formMapsUrl}
+                        onChange={e => setFormMapsUrl(e.target.value)}
+                        placeholder="Ej. https://maps.app.goo.gl/..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Información Eléctrica y del Inmueble */}
+                <div className="pt-2">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <span>2. Datos de Consumo CFE y Propiedad</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 text-xs">
+                    {/* Monto de Pago Recibo CFE Promedio */}
+                    <div className="md:col-span-2 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                          Monto de Pago Recibo CFE Promedio ($ MXN Bimestral) *
+                        </label>
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {billNum > 0 ? `$${billNum.toLocaleString('es-MX')} MXN` : '$0'}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        required
+                        value={formBill}
+                        onChange={e => setFormBill(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="Ej. 3500"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-extrabold text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                      />
+
+                      {/* Botones de Selección Rápida */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          { label: '$1,500', val: 1500 },
+                          { label: '$2,500', val: 2500 },
+                          { label: '$3,500', val: 3500 },
+                          { label: '$5,000', val: 5000 },
+                          { label: '$8,000', val: 8000 },
+                          { label: '$12,000 (Tarifa DAC)', val: 12000 }
+                        ].map(chip => (
+                          <button
+                            key={chip.val}
+                            type="button"
+                            onClick={() => setFormBill(chip.val)}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer border ${
+                              Number(formBill) === chip.val
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            {chip.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Espacio Disponible en Techo */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Espacio Disponible en Techo (m²)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={formSpace}
+                        onChange={e => setFormSpace(e.target.value.replace(/[^0-9.]/g, ''))}
+                        placeholder="Ej. 40"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Número de Medidores CFE */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Número de Medidores CFE
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formMeters}
+                        onChange={e => setFormMeters(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="Ej. 1"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Estatus Servicio CFE */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Estatus de Servicio CFE
+                      </label>
+                      <select
+                        value={formCFE}
+                        onChange={e => setFormCFE(e.target.value as any)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      >
+                        <option value="activo_sin_adeudo">Activo sin Adeudo</option>
+                        <option value="con_adeudo">Con Adeudo</option>
+                        <option value="inactivo">Inactivo / Nuevo Contrato</option>
+                      </select>
+                    </div>
+
+                    {/* Validación de Propiedad */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Validación de Propiedad
+                      </label>
+                      <select
+                        value={formOwnership}
+                        onChange={e => setFormOwnership(e.target.value as any)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      >
+                        <option value="propietario">Propietario Inmueble</option>
+                        <option value="arrendatario_autorizado">Arrendatario Autorizado</option>
+                      </select>
+                    </div>
+
+                    {/* Forma de Pago Deseada */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Forma de Pago de Interés
+                      </label>
+                      <select
+                        value={formPayMethod}
+                        onChange={e => setFormPayMethod(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      >
+                        <option value="contado">Pago de Contado (5% Descuento Especial)</option>
+                        <option value="directo_3">Crédito Directo 3 Meses (50% Enganche)</option>
+                        <option value="directo_6">Crédito Directo 6 Meses (50% Enganche)</option>
+                        <option value="msi">Meses Sin Intereses con Tarjeta de Crédito</option>
+                      </select>
+                    </div>
+
+                    {/* Número de Hilos en Acometida */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Número de Hilos en Acometida
+                      </label>
+                      <select
+                        value={formWires}
+                        onChange={e => setFormWires(Number(e.target.value))}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white"
+                      >
+                        <option value={2}>2 Hilos (Monofásico 110V)</option>
+                        <option value={3}>3 Hilos (Bifásico 220V)</option>
+                        <option value={4}>4 Hilos (Trifásico 220V/440V)</option>
+                      </select>
+                    </div>
+
+                    {/* Cargas Eléctricas Deseadas */}
+                    <div className="md:col-span-2 space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                        Cargas Eléctricas Especiales (Selección Múltiple)
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {['Aire Acondicionado 220V', 'Estufa Eléctrica', 'Cargador Auto Eléctrico', 'Bomba de Agua'].map(load => {
+                          const hasLoad = formLoads.includes(load);
+                          return (
+                            <button
+                              key={load}
+                              type="button"
+                              onClick={() => {
+                                if (hasLoad) {
+                                  setFormLoads(formLoads.filter(l => l !== load));
+                                } else {
+                                  setFormLoads([...formLoads, load]);
+                                }
+                              }}
+                              className={`p-2 rounded-xl border text-[11px] font-bold text-center transition-all cursor-pointer ${
+                                hasLoad 
+                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800 shadow-xs' 
+                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {hasLoad ? '✓ ' : '+ '}{load}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resumen Financiero y de Paneles en Tiempo Real */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white border border-slate-800 space-y-3 shadow-lg">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Estimación Solar en Tiempo Real</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        Dimensionamiento oficial para consumo bimestral de ${billNum.toLocaleString('es-MX')} MXN
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] text-slate-400 uppercase font-bold block">Inversión Base Estimada</span>
+                      <span className="text-base sm:text-lg font-black text-white font-mono">
+                        ${baseInvestment.toLocaleString('es-MX')} <span className="text-[10px] text-slate-400">MXN</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
+                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Paneles Sugeridos</span>
+                      <span className="text-sm font-black text-emerald-400 font-mono">
+                        {estimatedPanelsCount} {estimatedPanelsCount === 1 ? 'Módulo' : 'Módulos'}
+                      </span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">{((estimatedPanelsCount * 550) / 1000).toFixed(2)} kWp</span>
+                    </div>
+
+                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
+                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Enganche {finCalc.downPercent}%</span>
+                      <span className="text-sm font-black text-amber-400 font-mono">
+                        ${finCalc.downPayment.toLocaleString('es-MX')}
+                      </span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">Al firmar contrato</span>
+                    </div>
+
+                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
+                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">
+                        {finCalc.isContado ? 'Descuento 5% Contado' : `${finCalc.months} Mensualidades`}
+                      </span>
+                      <span className="text-sm font-black text-sky-400 font-mono">
+                        {finCalc.isContado 
+                          ? `-$${Math.round(baseInvestment * 0.05).toLocaleString('es-MX')}` 
+                          : `$${finCalc.monthlyPayment.toLocaleString('es-MX')}/mes`}
+                      </span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">{finCalc.isContado ? 'Neto a liquidar' : 'Sobre saldos'}</span>
+                    </div>
+
+                    <div className="bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/60">
+                      <span className="text-[8px] text-slate-400 font-extrabold uppercase block">Ahorro Bimestral</span>
+                      <span className="text-sm font-black text-emerald-300 font-mono">
+                        ~${bimestralSavings.toLocaleString('es-MX')}
+                      </span>
+                      <span className="text-[8px] text-slate-400 block mt-0.5">Hasta 98% ahorro</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ADVERTENCIA PROMINENTE REQUERIDA POR EL USUARIO */}
+                <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-amber-950 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Camera className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
+                      <span>📸 Toma foto de tu recibo de luz, medidor, etc y envíales por este medio</span>
+                    </h4>
+                    <p className="text-xs text-amber-900/90 leading-relaxed font-semibold">
+                      Para que nuestro equipo de ingeniería pueda calcular con total precisión la inclinación, azimut y capacidad exacta para tu inmueble, por favor toma fotos con tu dispositivo móvil de: <strong>1) Ambos lados de tu recibo de CFE</strong> y <strong>2) Tu medidor o centro de carga</strong>. Al enviar tus datos se abrirá WhatsApp al <strong>+52 1 229 323 3633</strong> donde podrás compartir tus fotos al instante.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Botón de Envío Directo a WhatsApp */}
+                <button
+                  type="submit"
+                  disabled={formSubmitting}
+                  style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
+                  className="w-full py-4 px-6 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-900/20 hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  <Send className="w-5 h-5" />
+                  <span>📲 Enviar Solicitud a WhatsApp (+52 1 229 323 3633)</span>
+                </button>
+              </form>
+            )}
+
+          </div>
+
         </div>
       </section>
 

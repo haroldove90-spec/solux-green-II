@@ -532,6 +532,154 @@ export default function AdminLandingPage({
               </div>
             </div>
 
+            {/* CONTROL INDEPENDIENTE DE BOTONES DE LAS 3 IMÁGENES DEL SLIDER */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+              <div className="border-b border-slate-700/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-1.5 border border-emerald-500/30">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Control Total e Independiente</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black uppercase text-white flex items-center gap-2">
+                    <span>Botones de las 3 Imágenes del Slider Hero</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Configura el texto, enlace de destino y colores de cada uno de los botones de forma 100% independiente.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {[0, 1, 2].map((slideIndex) => {
+                  const s = formData.heroSlides[slideIndex] || {
+                    id: `slide_${slideIndex + 1}`,
+                    imageUrl: '',
+                    title: `Diapositiva #${slideIndex + 1}`,
+                    ctaText: slideIndex === 2 ? 'Solicita información' : slideIndex === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
+                    ctaLink: slideIndex === 2 ? '#contacto' : '#contacto',
+                    ctaBgColor: slideIndex === 1 ? '#0284c7' : '#059669',
+                    ctaTextColor: '#ffffff'
+                  };
+
+                  return (
+                    <div 
+                      key={`btn_ctrl_${slideIndex}`}
+                      className="bg-slate-950/80 border border-slate-700 rounded-2xl p-4 sm:p-5 space-y-3.5 relative flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-mono font-bold">
+                              {slideIndex + 1}
+                            </span>
+                            <span>Botón Imagen #{slideIndex + 1}</span>
+                          </span>
+
+                          <span className="text-[9px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                            {slideIndex === 2 ? 'Tercera Imagen' : slideIndex === 1 ? 'Segunda Imagen' : 'Primera Imagen'}
+                          </span>
+                        </div>
+
+                        {/* Texto del Botón */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block">
+                            Texto del Botón *
+                          </label>
+                          <input
+                            type="text"
+                            value={s.ctaText || ''}
+                            onChange={(e) => handleUpdateSlide(slideIndex, { ctaText: e.target.value })}
+                            placeholder={slideIndex === 2 ? 'Solicita información' : 'Texto del botón...'}
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-black text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        {/* Enlace o Destino del Botón */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold uppercase text-slate-300 tracking-wider block">
+                            Enlace o Destino (Acción)
+                          </label>
+                          <input
+                            type="text"
+                            value={s.ctaLink || ''}
+                            onChange={(e) => handleUpdateSlide(slideIndex, { ctaLink: e.target.value })}
+                            placeholder="#contacto o URL"
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                          />
+
+                          {/* Botones de Selección Rápida de Enlace */}
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {[
+                              { label: '#contacto (Formulario)', url: '#contacto' },
+                              { label: 'WhatsApp (+52 1 229 323 3633)', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20solicito%20informaci%C3%B3n' },
+                              { label: '#soluciones', url: '#soluciones' },
+                              { label: '#beneficios', url: '#beneficios' }
+                            ].map(preset => (
+                              <button
+                                key={preset.url}
+                                type="button"
+                                onClick={() => handleUpdateSlide(slideIndex, { ctaLink: preset.url })}
+                                className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded cursor-pointer transition-all border ${
+                                  s.ctaLink === preset.url
+                                    ? 'bg-emerald-600 text-white border-emerald-500'
+                                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Color de Fondo y de Texto */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-extrabold uppercase text-slate-400 block">Color Fondo</label>
+                            <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-700">
+                              <input
+                                type="color"
+                                value={s.ctaBgColor || '#059669'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaBgColor: e.target.value })}
+                                className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                              />
+                              <span className="text-[10px] font-mono text-slate-300 font-bold">{s.ctaBgColor || '#059669'}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-extrabold uppercase text-slate-400 block">Color Texto</label>
+                            <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-700">
+                              <input
+                                type="color"
+                                value={s.ctaTextColor || '#ffffff'}
+                                onChange={(e) => handleUpdateSlide(slideIndex, { ctaTextColor: e.target.value })}
+                                className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                              />
+                              <span className="text-[10px] font-mono text-slate-300 font-bold">{s.ctaTextColor || '#ffffff'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Live Button Preview Box */}
+                      <div className="pt-2 border-t border-slate-800 text-center space-y-1">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">Vista Previa del Botón:</span>
+                        <div
+                          style={{
+                            backgroundColor: s.ctaBgColor || '#059669',
+                            color: s.ctaTextColor || '#ffffff'
+                          }}
+                          className="py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider shadow truncate"
+                        >
+                          {s.ctaText || 'Botón sin texto'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* SLIDER IMAGES MANAGER */}
             <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
               <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-700 pb-4">
@@ -678,9 +826,37 @@ export default function AdminLandingPage({
                               type="text"
                               value={slide.ctaText || ''}
                               onChange={(e) => handleUpdateSlide(index, { ctaText: e.target.value })}
-                              placeholder="Ej. 👉 Solicitar Cotización"
+                              placeholder={index === 2 ? 'Solicita información' : 'Ej. 👉 Solicitar Cotización'}
                               className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-emerald-500"
                             />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">
+                              Enlace / Destino CTA
+                            </label>
+                            <input
+                              type="text"
+                              value={slide.ctaLink || ''}
+                              onChange={(e) => handleUpdateSlide(index, { ctaLink: e.target.value })}
+                              placeholder="#contacto o URL"
+                              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-400 uppercase">
+                              Color del Botón
+                            </label>
+                            <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                              <input
+                                type="color"
+                                value={slide.ctaBgColor || '#059669'}
+                                onChange={(e) => handleUpdateSlide(index, { ctaBgColor: e.target.value })}
+                                className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                              />
+                              <span className="text-[10px] font-mono text-slate-300 font-bold">{slide.ctaBgColor || '#059669'}</span>
+                            </div>
                           </div>
                         </div>
 

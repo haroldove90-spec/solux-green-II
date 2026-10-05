@@ -77,12 +77,12 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
       badge: '🤝 Red de Asesores de Enlace',
       title: 'Gana Dinero Sin Vender refiriendo proyectos solares',
       subtitle: 'Únete como Asesor de Enlace y recibe atractivas comisiones por cada proyecto cerrado.',
-      ctaText: '🚀 Quiero ser Asesor de Enlace',
-      ctaLink: '#enlace',
-      ctaBgColor: '#e11d48',
+      ctaText: 'Solicita información',
+      ctaLink: '#contacto',
+      ctaBgColor: '#059669',
       ctaTextColor: '#ffffff',
-      secondaryCtaText: 'Más Información',
-      secondaryCtaLink: '#beneficios',
+      secondaryCtaText: 'Conocer Soluciones',
+      secondaryCtaLink: '#soluciones',
       textAlign: 'center',
       alt: 'Red de alianzas y asesores de enlace Solux Green'
     }
