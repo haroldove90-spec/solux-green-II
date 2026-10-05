@@ -555,9 +555,9 @@ export default function AdminLandingPage({
                     id: `slide_${slideIndex + 1}`,
                     imageUrl: '',
                     title: `Diapositiva #${slideIndex + 1}`,
-                    ctaText: slideIndex === 2 ? 'Solicita información' : slideIndex === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
-                    ctaLink: slideIndex === 2 ? '#contacto' : '#contacto',
-                    ctaBgColor: slideIndex === 1 ? '#0284c7' : '#059669',
+                    ctaText: slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : slideIndex === 1 ? '📲 Cotizar para mi Negocio' : '👉 Solicitar Cotización Gratis',
+                    ctaLink: slideIndex === 2 ? 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' : '#contacto',
+                    ctaBgColor: slideIndex === 2 ? '#e11d48' : slideIndex === 1 ? '#0284c7' : '#059669',
                     ctaTextColor: '#ffffff'
                   };
 
@@ -589,7 +589,7 @@ export default function AdminLandingPage({
                             type="text"
                             value={s.ctaText || ''}
                             onChange={(e) => handleUpdateSlide(slideIndex, { ctaText: e.target.value })}
-                            placeholder={slideIndex === 2 ? 'Solicita información' : 'Texto del botón...'}
+                            placeholder={slideIndex === 2 ? '🚀 Quiero ser Asesor de Enlace' : 'Texto del botón...'}
                             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-black text-white focus:outline-none focus:border-emerald-500"
                           />
                         </div>
@@ -610,8 +610,10 @@ export default function AdminLandingPage({
                           {/* Botones de Selección Rápida de Enlace */}
                           <div className="flex flex-wrap gap-1 pt-1">
                             {[
+                              { label: 'WhatsApp Asesor Enlace', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes' },
                               { label: '#contacto (Formulario)', url: '#contacto' },
-                              { label: 'WhatsApp (+52 1 229 323 3633)', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20solicito%20informaci%C3%B3n' },
+                              { label: 'WhatsApp Cotizar Negocio', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20para%20mi%20empresa' },
+                              { label: 'WhatsApp Cotizar Hogar', url: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20un%20sistema%20de%20paneles%20solares' },
                               { label: '#soluciones', url: '#soluciones' },
                               { label: '#beneficios', url: '#beneficios' }
                             ].map(preset => (
@@ -826,7 +828,7 @@ export default function AdminLandingPage({
                               type="text"
                               value={slide.ctaText || ''}
                               onChange={(e) => handleUpdateSlide(index, { ctaText: e.target.value })}
-                              placeholder={index === 2 ? 'Solicita información' : 'Ej. 👉 Solicitar Cotización'}
+                              placeholder={index === 2 ? '🚀 Quiero ser Asesor de Enlace' : 'Ej. 👉 Solicitar Cotización'}
                               className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-bold text-white focus:outline-none focus:border-emerald-500"
                             />
                           </div>

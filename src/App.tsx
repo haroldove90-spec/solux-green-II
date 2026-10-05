@@ -443,7 +443,20 @@ function App() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          return {
+          if (parsed && Array.isArray(parsed.heroSlides)) {
+            parsed.heroSlides = parsed.heroSlides.map((s: any, idx: number) => {
+              const cleanSlide = { ...s };
+              delete cleanSlide.secondaryCtaText;
+              delete cleanSlide.secondaryCtaLink;
+              if (idx === 2 || cleanSlide.id === 'slide_3' || (cleanSlide.ctaText || '').toLowerCase().includes('enlace')) {
+                cleanSlide.ctaText = cleanSlide.ctaText || '🚀 Quiero ser Asesor de Enlace';
+                cleanSlide.ctaLink = 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
+                cleanSlide.ctaBgColor = cleanSlide.ctaBgColor || '#e11d48';
+              }
+              return cleanSlide;
+            });
+          }
+          const mergedCfg = {
             ...DEFAULT_LANDING_CONFIG,
             ...parsed,
             styles: {
@@ -451,6 +464,8 @@ function App() {
               ...(parsed.styles || {})
             }
           };
+          localStorage.setItem('solux_landing_config', JSON.stringify(mergedCfg));
+          return mergedCfg;
         } catch (e) {}
       }
     }

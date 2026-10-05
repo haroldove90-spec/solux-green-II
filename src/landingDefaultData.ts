@@ -51,8 +51,6 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
       ctaLink: '#contacto',
       ctaBgColor: '#059669',
       ctaTextColor: '#ffffff',
-      secondaryCtaText: 'Conocer Soluciones',
-      secondaryCtaLink: '#soluciones',
       textAlign: 'left',
       alt: 'Paneles solares monocristalinos instalados en techo'
     },
@@ -66,8 +64,6 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
       ctaLink: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20cotizar%20para%20mi%20empresa',
       ctaBgColor: '#0284c7',
       ctaTextColor: '#ffffff',
-      secondaryCtaText: 'Ver Casos de Éxito',
-      secondaryCtaLink: '#proyectos',
       textAlign: 'left',
       alt: 'Instalación industrial y comercial de paneles solares'
     },
@@ -77,12 +73,10 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
       badge: '🤝 Red de Asesores de Enlace',
       title: 'Gana Dinero Sin Vender refiriendo proyectos solares',
       subtitle: 'Únete como Asesor de Enlace y recibe atractivas comisiones por cada proyecto cerrado.',
-      ctaText: 'Solicita información',
-      ctaLink: '#contacto',
-      ctaBgColor: '#059669',
+      ctaText: '🚀 Quiero ser Asesor de Enlace',
+      ctaLink: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes',
+      ctaBgColor: '#e11d48',
       ctaTextColor: '#ffffff',
-      secondaryCtaText: 'Conocer Soluciones',
-      secondaryCtaLink: '#soluciones',
       textAlign: 'center',
       alt: 'Red de alianzas y asesores de enlace Solux Green'
     }

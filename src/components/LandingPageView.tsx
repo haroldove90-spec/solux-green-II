@@ -119,6 +119,19 @@ export default function LandingPageView({
     }
   };
 
+  // Resolver for slide CTA links (linking "Quiero ser Asesor de Enlace" to WhatsApp info)
+  const getSlideCtaLink = (slide?: LandingSlide) => {
+    if (!slide) return config.heroCtaLink || '#contacto';
+    const text = (slide.ctaText || '').toLowerCase();
+    const isEnlace = text.includes('enlace') || text.includes('asesor') || slide.id === 'slide_3';
+    if (isEnlace) {
+      if (!slide.ctaLink || slide.ctaLink === '#contacto' || !slide.ctaLink.startsWith('http') || slide.ctaLink.includes('wa.me')) {
+        return 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20quiero%20ser%20Asesor%20de%20Enlace%20y%20solicito%20informes';
+      }
+    }
+    return slide.ctaLink || config.heroCtaLink || '#contacto';
+  };
+
   const handleProspectFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim() || !formMunicipality.trim()) {
@@ -389,49 +402,34 @@ export default function LandingPageView({
               transition={{ delay: 0.4 }}
               className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4"
             >
-              <a
-                href={currentSlide?.ctaLink || config.heroCtaLink || '#contacto'}
-                onClick={(e) => {
-                  const targetLink = currentSlide?.ctaLink || config.heroCtaLink || '#contacto';
-                  if (targetLink.startsWith('#')) {
-                    e.preventDefault();
-                    const el = document.querySelector(targetLink);
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                target={currentSlide?.ctaLink?.startsWith('http') ? '_blank' : undefined}
-                rel={currentSlide?.ctaLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                style={{ 
-                  backgroundColor: currentSlide?.ctaBgColor || config.styles?.primaryBtnColor || '#059669',
-                  color: currentSlide?.ctaTextColor || '#ffffff'
-                }}
-                className="px-8 py-4 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
-              >
-                <span>{currentSlide?.ctaText || config.heroCtaText || '👉 Solicitar Cotización'}</span>
-              </a>
+              {(() => {
+                const targetLink = getSlideCtaLink(currentSlide);
+                const isExternal = targetLink.startsWith('http');
+                const isSlide3OrEnlace = currentSlide?.id === 'slide_3' || (currentSlide?.ctaText || '').toLowerCase().includes('enlace');
+                const buttonBg = currentSlide?.ctaBgColor || (isSlide3OrEnlace ? '#e11d48' : config.styles?.primaryBtnColor || '#059669');
 
-              {currentSlide?.secondaryCtaText && (
-                <a
-                  href={currentSlide.secondaryCtaLink || '#contacto'}
-                  onClick={(e) => {
-                    const targetLink = currentSlide.secondaryCtaLink || '#contacto';
-                    if (targetLink.startsWith('#')) {
-                      e.preventDefault();
-                      const el = document.querySelector(targetLink);
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  target={currentSlide.secondaryCtaLink?.startsWith('http') ? '_blank' : undefined}
-                  rel={currentSlide.secondaryCtaLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  style={{
-                    backgroundColor: currentSlide.secondaryCtaBgColor || 'rgba(255, 255, 255, 0.15)',
-                    color: currentSlide.secondaryCtaTextColor || '#ffffff'
-                  }}
-                  className="px-6 py-4 rounded-2xl text-sm sm:text-base font-bold uppercase tracking-wider text-center border border-white/20 backdrop-blur-md hover:bg-white/25 active:scale-98 transition-all flex items-center justify-center cursor-pointer"
-                >
-                  <span>{currentSlide.secondaryCtaText}</span>
-                </a>
-              )}
+                return (
+                  <a
+                    href={targetLink}
+                    onClick={(e) => {
+                      if (targetLink.startsWith('#')) {
+                        e.preventDefault();
+                        const el = document.querySelector(targetLink);
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                    style={{ 
+                      backgroundColor: buttonBg,
+                      color: currentSlide?.ctaTextColor || '#ffffff'
+                    }}
+                    className="px-8 py-4 rounded-2xl text-sm sm:text-base font-black uppercase tracking-wider text-center shadow-xl shadow-emerald-900/30 hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                  >
+                    <span>{currentSlide?.ctaText || (isSlide3OrEnlace ? '🚀 Quiero ser Asesor de Enlace' : config.heroCtaText || '👉 Solicitar Cotización')}</span>
+                  </a>
+                );
+              })()}
             </motion.div>
 
             {/* Texto de confianza */}
