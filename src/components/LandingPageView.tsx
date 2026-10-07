@@ -234,6 +234,117 @@ export default function LandingPageView({
     setFormSubmitting(false);
   };
 
+  // Universal section navigation and smart URL scroll handler
+  const scrollToTarget = (targetUrlOrId?: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!targetUrlOrId) return;
+    const raw = targetUrlOrId.trim();
+
+    const lower = raw.toLowerCase();
+
+    // 1. Check if destination is the Contact & Form section
+    const isContactTarget = 
+      raw === '#contacto' || 
+      raw === 'contacto' || 
+      raw === '#formulario-prospecto' || 
+      raw === 'formulario-prospecto' || 
+      raw === '/#contacto' || 
+      raw === '/contacto' ||
+      lower.includes('#contacto') ||
+      lower.includes('#formulario') ||
+      lower.endsWith('/contacto') ||
+      lower.endsWith('contacto');
+
+    // 2. Check if external URL or WhatsApp
+    const isWa = raw.startsWith('wa.me') || raw.startsWith('whatsapp:') || raw.startsWith('+52') || (!raw.startsWith('#') && !isContactTarget && (raw.includes('wa.me') || raw.includes('api.whatsapp.com')));
+    const isTelOrMail = raw.startsWith('tel:') || raw.startsWith('mailto:');
+    const isExternalHttp = (raw.startsWith('http://') || raw.startsWith('https://')) && !isContactTarget && !raw.includes('#');
+
+    if (isWa) {
+      let finalUrl = raw;
+      if (raw.startsWith('wa.me')) finalUrl = `https://${raw}`;
+      else if (raw.startsWith('+')) finalUrl = `https://wa.me/${raw.replace(/\D/g, '')}`;
+      window.open(finalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (isTelOrMail) {
+      window.location.href = raw;
+      return;
+    }
+
+    if (isExternalHttp) {
+      window.open(raw, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // 3. Section Navigation
+    let clean = raw.replace(/^#+/, '').replace(/^\/+/, '').trim().toLowerCase();
+    
+    if (isContactTarget) {
+      clean = 'contacto';
+    } else if (clean.includes('solucion') || clean.includes('whatsapp') || clean.includes('recibo')) {
+      clean = 'soluciones';
+    } else if (clean.includes('beneficio')) {
+      clean = 'beneficios';
+    } else if (clean.includes('proceso') || clean.includes('paso')) {
+      clean = 'proceso';
+    } else if (clean.includes('proyecto') || clean.includes('stat')) {
+      clean = 'proyectos';
+    } else if (clean.includes('faq') || clean.includes('pregunta')) {
+      clean = 'faq';
+    } else if (clean.includes('hero') || clean.includes('inicio')) {
+      clean = 'hero';
+    }
+
+    let el: HTMLElement | null = null;
+    if (clean === 'contacto') {
+      el = document.getElementById('contacto') || document.getElementById('formulario-prospecto');
+    } else {
+      el = document.getElementById(clean);
+    }
+
+    if (!el && raw.startsWith('#')) {
+      try {
+        el = document.querySelector(raw) as HTMLElement;
+      } catch (_) {}
+    }
+
+    if (el) {
+      const headerEl = document.querySelector('header');
+      const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 80;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 16;
+
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      });
+
+      // Visual flash pulse effect so the user sees it activated immediately!
+      el.classList.add('ring-4', 'ring-emerald-500', 'ring-offset-4', 'ring-offset-slate-900', 'transition-all', 'duration-500');
+      setTimeout(() => {
+        el?.classList.remove('ring-4', 'ring-emerald-500', 'ring-offset-4', 'ring-offset-slate-900');
+      }, 2500);
+
+      // Focus first input if it's the contact section
+      if (clean === 'contacto') {
+        setTimeout(() => {
+          const firstInput = document.getElementById('lead_fullName') || (el?.querySelector('input, textarea, select') as HTMLElement | null);
+          firstInput?.focus({ preventScroll: true });
+        }, 500);
+      }
+    } else {
+      // If no element found and looks like a domain (e.g. www.ejemplo.com)
+      if (raw.includes('.') && !raw.startsWith('#')) {
+        window.open(raw.startsWith('http') ? raw : `https://${raw}`, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
   const currentSlide = slides[currentSlideIndex] || slides[0];
 
   return (
@@ -355,7 +466,8 @@ export default function LandingPageView({
               <a
                 key={item.id}
                 href={item.href}
-                className="text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors tracking-tight"
+                onClick={(e) => scrollToTarget(item.href, e)}
+                className="text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors tracking-tight cursor-pointer"
               >
                 {item.label}
               </a>
@@ -378,23 +490,13 @@ export default function LandingPageView({
               </button>
             )}
 
-            {/* Botón Directo: Cotizar por WhatsApp */}
+            {/* Botón Directo: Cotizar por WhatsApp o Ir a Sección */}
             {(() => {
               const targetUrl = config.headerCtaLink || getCleanWhatsappUrl();
-              const isAnchor = targetUrl.startsWith('#');
               return (
                 <a
                   href={targetUrl}
-                  target={isAnchor ? undefined : "_blank"}
-                  rel={isAnchor ? undefined : "noopener noreferrer"}
-                  onClick={(e) => {
-                    if (isAnchor) {
-                      e.preventDefault();
-                      const targetId = targetUrl.replace('#', '');
-                      const el = document.getElementById(targetId) || document.querySelector(targetUrl);
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
+                  onClick={(e) => scrollToTarget(targetUrl, e)}
                   style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
                   className="px-3.5 sm:px-5 py-2 sm:py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
                 >
@@ -448,8 +550,11 @@ export default function LandingPageView({
                     <a
                       key={item.id}
                       href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 font-bold text-sm transition-colors border border-slate-100 active:scale-98"
+                      onClick={(e) => {
+                        setIsMobileMenuOpen(false);
+                        scrollToTarget(item.href, e);
+                      }}
+                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 font-bold text-sm transition-colors border border-slate-100 active:scale-98 cursor-pointer"
                     >
                       <span>{item.label}</span>
                       <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -475,20 +580,12 @@ export default function LandingPageView({
 
                   {(() => {
                     const targetUrl = config.headerCtaLink || getCleanWhatsappUrl();
-                    const isAnchor = targetUrl.startsWith('#');
                     return (
                       <a
                         href={targetUrl}
-                        target={isAnchor ? undefined : "_blank"}
-                        rel={isAnchor ? undefined : "noopener noreferrer"}
                         onClick={(e) => {
                           setIsMobileMenuOpen(false);
-                          if (isAnchor) {
-                            e.preventDefault();
-                            const targetId = targetUrl.replace('#', '');
-                            const el = document.getElementById(targetId) || document.querySelector(targetUrl);
-                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                          }
+                          scrollToTarget(targetUrl, e);
                         }}
                         style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
                         className="flex-1 py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-98"
@@ -606,15 +703,7 @@ export default function LandingPageView({
                 return (
                   <a
                     href={targetLink}
-                    onClick={(e) => {
-                      if (targetLink.startsWith('#')) {
-                        e.preventDefault();
-                        const el = document.querySelector(targetLink);
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    target={isExternal ? '_blank' : undefined}
-                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                    onClick={(e) => scrollToTarget(targetLink, e)}
                     style={{ 
                       backgroundColor: buttonBg,
                       color: buttonTextColor
@@ -680,7 +769,8 @@ export default function LandingPageView({
       {/* 3. BARRA DE ESTADÍSTICAS Y CONFIANZA (SOCIAL PROOF)                       */}
       {/* ========================================================================= */}
       <section 
-        className="py-12 border-y border-slate-800 text-white relative z-10 transition-colors"
+        id="proyectos"
+        className="py-12 border-y border-slate-800 text-white relative z-10 transition-colors scroll-mt-20"
         style={{ backgroundColor: config.styles?.statsBgColor || '#1e293b' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -830,18 +920,23 @@ export default function LandingPageView({
             ))}
           </div>
 
-          {/* Quick CTA to start Step 1 */}
+          {/* Quick CTA to start Step 1 / Contact Form */}
           <div className="mt-12 text-center">
-            <a
-              href={getCleanWhatsappUrl('Hola Solux Green, quiero enviar mi recibo para comenzar el Paso 1 de cotización')}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
-              className="inline-flex items-center gap-3 px-8 py-4 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-            >
-              <FileText className="w-5 h-5" />
-              <span>Iniciar Ahora: Enviar Recibo de Luz</span>
-            </a>
+            {(() => {
+              const targetLink = config.processBtnLink || '#contacto';
+              const btnText = config.processBtnText || 'Iniciar Ahora: Enviar Recibo de Luz';
+              return (
+                <a
+                  href={targetLink}
+                  onClick={(e) => scrollToTarget(targetLink, e)}
+                  style={{ backgroundColor: config.styles?.primaryBtnColor || '#059669' }}
+                  className="inline-flex items-center gap-3 px-8 py-4 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                >
+                  <FileText className="w-5 h-5" />
+                  <span>{btnText}</span>
+                </a>
+              );
+            })()}
           </div>
 
         </div>
@@ -876,20 +971,10 @@ export default function LandingPageView({
             {(() => {
               const defaultWaUrl = getCleanWhatsappUrl('Hola Solux Green, te comparto la foto de mi recibo de luz más reciente para mi simulación solar.');
               const targetUrl = config.whatsappCardBtnLink || defaultWaUrl;
-              const isAnchor = targetUrl.startsWith('#');
               return (
                 <a
                   href={targetUrl}
-                  target={isAnchor ? undefined : "_blank"}
-                  rel={isAnchor ? undefined : "noopener noreferrer"}
-                  onClick={(e) => {
-                    if (isAnchor) {
-                      e.preventDefault();
-                      const targetId = targetUrl.replace('#', '');
-                      const el = document.getElementById(targetId) || document.querySelector(targetUrl);
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
+                  onClick={(e) => scrollToTarget(targetUrl, e)}
                   style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
                   className="w-full sm:w-auto px-10 py-5 text-white font-black text-base sm:text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
                 >

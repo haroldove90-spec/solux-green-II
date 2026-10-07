@@ -467,6 +467,8 @@ export interface LandingConfig {
   processTitle: string;
   processSubtitle: string;
   steps: LandingStep[];
+  processBtnText?: string;
+  processBtnLink?: string;
 
   // Direct Interaction WhatsApp Card
   whatsappCardTitle: string;

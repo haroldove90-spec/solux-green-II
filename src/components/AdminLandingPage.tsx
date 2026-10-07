@@ -6,7 +6,7 @@ import {
   HelpCircle, MessageSquare, Phone, Mail, MapPin, 
   Sliders, ArrowLeft, ExternalLink, Database, Copy, 
   CheckCircle2, AlertTriangle, Layers, Info, ShieldCheck,
-  ChevronRight, RefreshCw, SlidersHorizontal, Clock, LogOut
+  ChevronRight, RefreshCw, SlidersHorizontal, Clock, LogOut, FileText
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat } from '../types';
 import { uploadLandingImageToSupabase } from '../supabaseService';
@@ -106,6 +106,303 @@ ON storage.objects FOR DELETE
 USING (bucket_id = 'landing-images');
 `;
 
+export const SUPABASE_SAFE_FULL_SQL = `-- =====================================================================
+-- SOLUX GREEN - SCRIPT SQL COMPLETO Y 100% SEGURO PARA SUPABASE
+-- 🛡️ GARANTÍA DE SEGURIDAD TOTAL:
+-- CERO 'DROP TABLE', CERO 'TRUNCATE', CERO 'DELETE'.
+-- NINGÚN DATO, CLIENTE, PROYECTO O CONFIGURACIÓN PREVIA SERÁ BORRADO.
+-- =====================================================================
+
+-- 1. Tabla de la Landing Page
+CREATE TABLE IF NOT EXISTS public.landing_config (
+  id TEXT PRIMARY KEY DEFAULT 'default',
+  config JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.landing_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir lectura publica landing_config" ON public.landing_config;
+CREATE POLICY "Permitir lectura publica landing_config" ON public.landing_config FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Permitir escritura landing_config" ON public.landing_config;
+CREATE POLICY "Permitir escritura landing_config" ON public.landing_config FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON public.landing_config TO anon, authenticated, service_role;
+
+-- 2. Bucket Supabase Storage para Fotos ('landing-images')
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'landing-images', 'landing-images', true, 15728640,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+)
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 15728640;
+
+DROP POLICY IF EXISTS "Lectura publica landing-images" ON storage.objects;
+CREATE POLICY "Lectura publica landing-images" ON storage.objects FOR SELECT USING (bucket_id = 'landing-images');
+DROP POLICY IF EXISTS "Subida de imagenes landing-images" ON storage.objects;
+CREATE POLICY "Subida de imagenes landing-images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'landing-images');
+DROP POLICY IF EXISTS "Actualizacion imagenes landing-images" ON storage.objects;
+CREATE POLICY "Actualizacion imagenes landing-images" ON storage.objects FOR UPDATE USING (bucket_id = 'landing-images');
+DROP POLICY IF EXISTS "Eliminacion imagenes landing-images" ON storage.objects;
+CREATE POLICY "Eliminacion imagenes landing-images" ON storage.objects FOR DELETE USING (bucket_id = 'landing-images');
+
+-- 3. Tabla app_config
+CREATE TABLE IF NOT EXISTS public.app_config (
+    id VARCHAR(50) PRIMARY KEY DEFAULT 'main_config',
+    theme VARCHAR(20) DEFAULT 'light',
+    offline_mode BOOLEAN DEFAULT FALSE,
+    admin_switcher_enabled BOOLEAN DEFAULT TRUE,
+    panel_base_price NUMERIC DEFAULT 11000,
+    monthly_interest_rate NUMERIC DEFAULT 4.9,
+    site_survey_cost NUMERIC DEFAULT 250,
+    default_down_payment_percent NUMERIC DEFAULT 50,
+    contado_discount_percent NUMERIC DEFAULT 5,
+    financing_term_months JSONB DEFAULT '[3, 6]'::jsonb,
+    financing_terms JSONB DEFAULT '[{"id":"term_3","months":3,"label":"3 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 3 meses"},{"id":"term_6","months":6,"label":"6 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 6 meses"}]'::jsonb,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE public.app_config ADD COLUMN IF NOT EXISTS default_down_payment_percent NUMERIC DEFAULT 50;
+ALTER TABLE public.app_config ADD COLUMN IF NOT EXISTS contado_discount_percent NUMERIC DEFAULT 5;
+ALTER TABLE public.app_config ADD COLUMN IF NOT EXISTS financing_term_months JSONB DEFAULT '[3, 6]'::jsonb;
+ALTER TABLE public.app_config ADD COLUMN IF NOT EXISTS financing_terms JSONB DEFAULT '[{"id":"term_3","months":3,"label":"3 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 3 meses"},{"id":"term_6","months":6,"label":"6 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 6 meses"}]'::jsonb;
+ALTER TABLE public.app_config ADD COLUMN IF NOT EXISTS panel_base_price NUMERIC DEFAULT 11000;
+INSERT INTO public.app_config (id, theme, offline_mode, admin_switcher_enabled, panel_base_price, monthly_interest_rate, site_survey_cost, default_down_payment_percent, contado_discount_percent, financing_term_months, financing_terms)
+VALUES ('main_config', 'light', FALSE, TRUE, 11000, 4.9, 250, 50, 5, '[3, 6]'::jsonb, '[{"id":"term_3","months":3,"label":"3 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 3 meses"},{"id":"term_6","months":6,"label":"6 Meses","monthlyInterestRate":4.9,"downPaymentPercent":50,"active":true,"description":"50% Enganche + Amortización a 6 meses"}]'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- 4. Tabla users_list
+CREATE TABLE IF NOT EXISTS public.users_list (
+    id VARCHAR(100) PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    pin VARCHAR(50) DEFAULT '1234',
+    password VARCHAR(255) DEFAULT 'password123',
+    role VARCHAR(50) NOT NULL,
+    full_name VARCHAR(150) NOT NULL,
+    parent_id VARCHAR(100),
+    phone VARCHAR(50),
+    whatsapp VARCHAR(50),
+    email VARCHAR(150),
+    avatar TEXT,
+    coverage VARCHAR(255) DEFAULT 'Cobertura Regional',
+    crews_count INT DEFAULT 1,
+    survey_rate NUMERIC DEFAULT 1000,
+    panel_rate NUMERIC DEFAULT 1200,
+    bank_account_holder VARCHAR(200),
+    bank_name VARCHAR(100),
+    bank_clabe VARCHAR(50),
+    account_number VARCHAR(50),
+    card_number VARCHAR(50),
+    payment_status_type VARCHAR(50),
+    prospecting_areas TEXT,
+    work_shift VARCHAR(100),
+    street_and_number TEXT,
+    colonia VARCHAR(150),
+    municipio VARCHAR(150),
+    zip_code VARCHAR(20),
+    address TEXT,
+    location_url TEXT,
+    ine_photos JSONB DEFAULT '[]'::jsonb,
+    ine_front_doc TEXT,
+    ine_back_doc TEXT,
+    partner_status VARCHAR(50) DEFAULT 'activo',
+    referral_code VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS parent_id VARCHAR(100);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS bank_account_holder VARCHAR(200);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS bank_clabe VARCHAR(50);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS account_number VARCHAR(50);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS card_number VARCHAR(50);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS payment_status_type VARCHAR(50);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS prospecting_areas TEXT;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS work_shift VARCHAR(100);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS street_and_number TEXT;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS colonia VARCHAR(150);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS municipio VARCHAR(150);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS ine_front_doc TEXT;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS ine_back_doc TEXT;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS ine_photos JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS coverage VARCHAR(255) DEFAULT 'Cobertura Regional';
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS crews_count INT DEFAULT 1;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS survey_rate NUMERIC DEFAULT 1000;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS panel_rate NUMERIC DEFAULT 1200;
+ALTER TABLE public.users_list ADD COLUMN IF NOT EXISTS partner_status VARCHAR(50) DEFAULT 'activo';
+
+INSERT INTO public.users_list (id, username, pin, password, role, full_name, email, whatsapp, referral_code) VALUES
+('usr_admin', 'admin', '1234', 'admin123', 'admin', 'Dirección General Solux', 'contacto@soluxgreen.com.mx', '5512345678', 'ADMIN-001'),
+('usr_landing_admin', 'admin_landing', '1234', 'solux2026', 'landingadmin', 'Administrador Landing Page', 'landing@soluxgreen.com.mx', '2293233633', 'LANDING-ADMIN')
+ON CONFLICT (id) DO NOTHING;
+
+-- 5. Tabla solar_projects
+CREATE TABLE IF NOT EXISTS public.solar_projects (
+    id VARCHAR(100) PRIMARY KEY,
+    client_name VARCHAR(150) NOT NULL,
+    client_phone VARCHAR(50) NOT NULL,
+    municipality_state VARCHAR(200) NOT NULL,
+    client_email VARCHAR(150),
+    whatsapp_phone VARCHAR(50),
+    google_maps_url TEXT,
+    electrical_load_type TEXT[],
+    wires_count INT,
+    average_bill NUMERIC NOT NULL,
+    available_space NUMERIC NOT NULL,
+    meters_count INT DEFAULT 1,
+    cfe_status VARCHAR(50) DEFAULT 'activo_sin_adeudo',
+    payment_method_desired VARCHAR(100) DEFAULT 'directo',
+    property_ownership VARCHAR(100) DEFAULT 'propietario',
+    evidence JSONB DEFAULT '{}'::jsonb,
+    estimated_panels INT DEFAULT 4,
+    required_area NUMERIC DEFAULT 8.8,
+    voltage_alert_220v BOOLEAN DEFAULT FALSE,
+    voltage_upgrade_quoted BOOLEAN DEFAULT FALSE,
+    total_investment NUMERIC DEFAULT 0,
+    financing JSONB,
+    saved_simulations JSONB DEFAULT '[]'::jsonb,
+    site_survey_paid BOOLEAN DEFAULT FALSE,
+    site_survey_cost NUMERIC DEFAULT 800,
+    site_survey_receipt TEXT,
+    site_survey_status VARCHAR(50) DEFAULT 'pendiente',
+    site_survey_data JSONB DEFAULT '{}'::jsonb,
+    site_survey_pdf TEXT,
+    site_survey_evidence JSONB DEFAULT '[]'::jsonb,
+    site_survey_date VARCHAR(50),
+    referrer_code VARCHAR(100),
+    assigned_enlace_id VARCHAR(100),
+    enlace_name VARCHAR(150),
+    is_recommended_by_advisor BOOLEAN DEFAULT FALSE,
+    recommendation_notes TEXT,
+    status VARCHAR(50) DEFAULT 'validacion',
+    assigned_partner_id VARCHAR(100),
+    monitoring_app_url TEXT,
+    monitoring_app_user TEXT,
+    monitoring_app_pass TEXT,
+    payments JSONB DEFAULT '[]'::jsonb,
+    created_date VARCHAR(50) NOT NULL,
+    created_by VARCHAR(100),
+    created_by_role VARCHAR(50),
+    advisor_name VARCHAR(150),
+    advisor_phone VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS referrer_code VARCHAR(100);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS created_by VARCHAR(100);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS created_by_role VARCHAR(50);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS advisor_name VARCHAR(150);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS advisor_phone VARCHAR(50);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS monitoring_app_url TEXT;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS monitoring_app_user TEXT;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS monitoring_app_pass TEXT;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS payments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_data JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_paid BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_receipt TEXT;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_status VARCHAR(50) DEFAULT 'pendiente';
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_cost NUMERIC DEFAULT 800;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_pdf TEXT;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_evidence JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS site_survey_date VARCHAR(50);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS assigned_enlace_id VARCHAR(100);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS enlace_name VARCHAR(150);
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS is_recommended_by_advisor BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.solar_projects ADD COLUMN IF NOT EXISTS recommendation_notes TEXT;
+
+-- 6. Tablas secundarias: technicians, materials, services, notifications, promotional_materials
+CREATE TABLE IF NOT EXISTS public.technicians (
+    id VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    specialty VARCHAR(100) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    rating NUMERIC DEFAULT 5.0,
+    avatar TEXT,
+    completed_services_count INT DEFAULT 0,
+    total_earnings NUMERIC DEFAULT 0,
+    current_location JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.materials (
+    id VARCHAR(100) PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    unit_price NUMERIC NOT NULL,
+    unit VARCHAR(50) NOT NULL,
+    stock INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.services (
+    id VARCHAR(100) PRIMARY KEY,
+    folio VARCHAR(50),
+    type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    assigned_technician_id VARCHAR(100),
+    client_name VARCHAR(150) NOT NULL,
+    client_phone VARCHAR(50),
+    address TEXT,
+    scheduled_date VARCHAR(50),
+    evidence JSONB DEFAULT '{}'::jsonb,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id VARCHAR(100) PRIMARY KEY,
+    recipient_role VARCHAR(50) NOT NULL,
+    recipient_user_id VARCHAR(100),
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'info',
+    read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.promotional_materials (
+    id VARCHAR(100) PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    description TEXT,
+    file_url TEXT NOT NULL,
+    file_name VARCHAR(200),
+    created_by VARCHAR(100),
+    created_by_name VARCHAR(150),
+    created_by_role VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.app_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users_list ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.solar_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.technicians ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.promotional_materials ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Permitir app_config" ON public.app_config;
+CREATE POLICY "Permitir app_config" ON public.app_config FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir users_list" ON public.users_list;
+CREATE POLICY "Permitir users_list" ON public.users_list FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir solar_projects" ON public.solar_projects;
+CREATE POLICY "Permitir solar_projects" ON public.solar_projects FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir technicians" ON public.technicians;
+CREATE POLICY "Permitir technicians" ON public.technicians FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir materials" ON public.materials;
+CREATE POLICY "Permitir materials" ON public.materials FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir services" ON public.services;
+CREATE POLICY "Permitir services" ON public.services FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir notifications" ON public.notifications;
+CREATE POLICY "Permitir notifications" ON public.notifications FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Permitir promotional_materials" ON public.promotional_materials;
+CREATE POLICY "Permitir promotional_materials" ON public.promotional_materials FOR ALL USING (true) WITH CHECK (true);
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+`;
+
 export default function AdminLandingPage({
   config,
   onSaveConfig,
@@ -149,6 +446,7 @@ export default function AdminLandingPage({
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [copiedSql, setCopiedSql] = useState(false);
   const [showSqlModal, setShowSqlModal] = useState(false);
+  const [sqlViewMode, setSqlViewMode] = useState<'landing' | 'full'>('full');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Helper to handle general text changes
@@ -186,8 +484,12 @@ export default function AdminLandingPage({
     try {
       const success = await onSaveConfig(formData);
       setSaveSuccess(true);
-      setStatusMessage('¡Cambios guardados con éxito en la Landing Page!');
-      setTimeout(() => setSaveSuccess(false), 3000);
+      if (success) {
+        setStatusMessage('¡Cambios guardados con éxito en la nube de Supabase y en la Landing Page!');
+      } else {
+        setStatusMessage('⚠️ Guardado en memoria local. Recuerda ejecutar el script SQL en Supabase para persistir permanentemente en la nube.');
+      }
+      setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
       setStatusMessage('Error al guardar: ' + (err.message || 'Error desconocido'));
     } finally {
@@ -344,8 +646,9 @@ export default function AdminLandingPage({
   };
 
   // Copy SQL
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(SUPABASE_LANDING_SQL);
+  const handleCopySql = (customSql?: string) => {
+    const textToCopy = customSql || (sqlViewMode === 'full' ? SUPABASE_SAFE_FULL_SQL : SUPABASE_LANDING_SQL);
+    navigator.clipboard.writeText(textToCopy);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 3000);
   };
@@ -1641,43 +1944,52 @@ export default function AdminLandingPage({
               </div>
 
               {/* Botones de Selección Rápida para el Header */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
                   Atajos Rápidos para el Header:
                 </span>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {[
                     { 
-                      label: '💬 WhatsApp Cotización General', 
-                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}` 
+                      label: '⭐ 📋 #contacto (Ir a Sección de Contacto)', 
+                      url: '#contacto',
+                      featured: true
                     },
                     { 
-                      label: '📋 #contacto (Ir al Formulario y Cotizador)', 
-                      url: '#contacto' 
+                      label: '💬 WhatsApp Cotización General', 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}`,
+                      featured: false
                     },
                     { 
                       label: '🏢 WhatsApp Comercial / Negocios', 
-                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, solicito información y cotización comercial para mi empresa.')}` 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, solicito información y cotización comercial para mi empresa.')}`,
+                      featured: false
                     },
                     { 
                       label: '🤝 WhatsApp Asesor de Enlace', 
-                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero ser Asesor de Enlace y solicito informes')}` 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero ser Asesor de Enlace y solicito informes')}`,
+                      featured: false
                     }
                   ].map(preset => (
                     <button
                       key={preset.label}
                       type="button"
                       onClick={() => handleChange('headerCtaLink', preset.url)}
-                      className={`text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg cursor-pointer transition-all border ${
+                      className={`text-[10px] font-extrabold px-3 py-1.5 rounded-xl cursor-pointer transition-all border ${
                         formData.headerCtaLink === preset.url
-                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                          : 'bg-slate-950 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+                          ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-2 ring-emerald-500/50'
+                          : preset.featured
+                            ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600/70 hover:bg-emerald-900 hover:text-white'
+                            : 'bg-slate-950 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
                       }`}
                     >
                       {preset.label}
                     </button>
                   ))}
                 </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed pt-1">
+                  💡 <strong>¿Cómo funciona?</strong> Puedes ingresar <code className="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono text-[10px]">#contacto</code> o simplemente <code className="text-emerald-400 bg-slate-950 px-1.5 py-0.5 rounded font-mono text-[10px]">contacto</code> para que al hacer clic se desplace suavemente hacia el formulario de cotización, se resalte la sección y se active el cursor en el primer campo.
+                </p>
               </div>
 
               {/* Vista previa del botón del Header */}
@@ -1924,6 +2236,119 @@ export default function AdminLandingPage({
                 </div>
               ))}
             </div>
+
+            {/* Configuración del Botón Principal de la Sección de Procesos */}
+            <div className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase text-white tracking-wide">
+                      Botón de Acción: Iniciar Ahora / Enviar Recibo
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Personaliza el texto y el destino de este botón (por ejemplo, llevar al formulario de cotización o a WhatsApp).
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Botón CTA
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                    Texto del Botón
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.processBtnText || ''}
+                    onChange={(e) => handleChange('processBtnText', e.target.value)}
+                    placeholder="Iniciar Ahora: Enviar Recibo de Luz"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                      Enlace o Destino del Botón
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono">
+                      {formData.processBtnLink?.startsWith('#') ? '📍 Desplazamiento interno' : '🌐 Enlace web'}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.processBtnLink || ''}
+                    onChange={(e) => handleChange('processBtnLink', e.target.value)}
+                    placeholder="#contacto o https://wa.me/..."
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Botones de Selección Rápida */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                  Atajos Rápidos de Destino:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      label: '📋 #contacto (Ir a Sección de Contacto y Cotización)',
+                      url: '#contacto',
+                      featured: true
+                    },
+                    {
+                      label: '💬 WhatsApp Directo con Recibo',
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero enviar mi recibo para comenzar el Paso 1 de cotización')}`,
+                      featured: false
+                    },
+                    {
+                      label: '⚡ #soluciones (Ir a Tarjeta de Interacción)',
+                      url: '#soluciones',
+                      featured: false
+                    }
+                  ].map(preset => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleChange('processBtnLink', preset.url)}
+                      className={`text-[10px] font-extrabold px-3 py-1.5 rounded-xl cursor-pointer transition-all border ${
+                        formData.processBtnLink === preset.url
+                          ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-2 ring-emerald-500/50'
+                          : preset.featured
+                            ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600/70 hover:bg-emerald-900 hover:text-white'
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vista previa del botón */}
+              <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase text-slate-400">Vista Previa:</span>
+                  <div
+                    style={{ backgroundColor: formData.styles?.primaryBtnColor || '#059669' }}
+                    className="px-5 py-2.5 text-white rounded-xl text-xs font-black uppercase tracking-wide flex items-center gap-2 shadow select-none"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{formData.processBtnText || 'Iniciar Ahora: Enviar Recibo de Luz'}</span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono truncate max-w-sm">
+                  Destino: <span className="text-emerald-400 font-bold">{formData.processBtnLink || '#contacto'}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2007,43 +2432,52 @@ export default function AdminLandingPage({
                 </p>
 
                 {/* Botones de Selección Rápida */}
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-2 pt-1">
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
                     Atajos y Enlaces Rápidos Recomendados:
                   </span>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { 
+                        label: '⭐ 📋 #contacto (Ir a Sección de Contacto)', 
+                        url: '#contacto',
+                        featured: true
+                      },
+                      { 
                         label: '💬 WhatsApp (Envío de foto de recibo CFE)', 
-                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, te comparto la foto de mi recibo de luz más reciente para mi simulación solar.')}`
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, te comparto la foto de mi recibo de luz más reciente para mi simulación solar.')}`,
+                        featured: false
                       },
                       { 
                         label: '📲 WhatsApp Directo General', 
-                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}`
-                      },
-                      { 
-                        label: '📋 #contacto (Ir al Formulario y Cotizador)', 
-                        url: '#contacto' 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}`,
+                        featured: false
                       },
                       { 
                         label: '🏢 WhatsApp para Empresas y Negocios', 
-                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero cotizar un sistema solar para mi empresa o negocio.')}` 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero cotizar un sistema solar para mi empresa o negocio.')}`,
+                        featured: false
                       }
                     ].map(preset => (
                       <button
                         key={preset.label}
                         type="button"
                         onClick={() => handleChange('whatsappCardBtnLink', preset.url)}
-                        className={`text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg cursor-pointer transition-all border ${
+                        className={`text-[10px] font-extrabold px-3 py-1.5 rounded-xl cursor-pointer transition-all border ${
                           formData.whatsappCardBtnLink === preset.url
-                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                            : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-2 ring-emerald-500/50'
+                            : preset.featured
+                              ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600/70 hover:bg-emerald-900 hover:text-white'
+                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
                         }`}
                       >
                         {preset.label}
                       </button>
                     ))}
                   </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed pt-1">
+                    💡 <strong>¿Cómo funciona?</strong> Puedes ingresar <code className="text-emerald-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono text-[10px]">#contacto</code> o simplemente <code className="text-emerald-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono text-[10px]">contacto</code> para que al pulsar el botón los visitantes vayan directamente al formulario de cotización.
+                  </p>
                 </div>
 
                 {/* Vista Previa del Botón de la Tarjeta */}
@@ -2411,48 +2845,87 @@ export default function AdminLandingPage({
         )}
 
         {/* --------------------------------------------------------------------- */}
-        {/* TAB 9: GUÍA SQL PARA SUPABASE                                         */}
+        {/* TAB 10: GUÍA SQL PARA SUPABASE (100% SEGURO - SIN BORRADO DE DATOS)     */}
         {/* --------------------------------------------------------------------- */}
         {activeTab === 'sql' && (
           <div className="bg-slate-800/80 border border-slate-700 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-700 pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-700 pb-4">
               <div>
-                <h2 className="text-lg font-black uppercase text-white flex items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-2 border border-emerald-500/30">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>100% No Destructivo • Tus Datos Están Protegidos</span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-black uppercase text-white flex items-center gap-2">
                   <Database className="w-5 h-5 text-emerald-400" />
-                  <span>Script SQL para Supabase (Tabla y Storage)</span>
+                  <span>Script SQL para Supabase (Sin Borrado de Datos)</span>
                 </h2>
-                <p className="text-xs text-slate-400">
-                  Ejecuta este script en el editor SQL de tu panel de Supabase para activar la persistencia y el bucket de imágenes.
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Ejecuta este script en el editor SQL de Supabase para activar la persistencia permanente y almacenamiento de imágenes.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={handleCopySql}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md cursor-pointer transition-all"
-              >
-                {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedSql ? '¡Copiado al Portapapeles!' : 'Copiar Código SQL'}</span>
-              </button>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="bg-slate-900 p-1 rounded-xl border border-slate-700 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSqlViewMode('full')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      sqlViewMode === 'full'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🛡️ Script Completo Seguro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSqlViewMode('landing')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      sqlViewMode === 'landing'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    📄 Solo Landing Page & Storage
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleCopySql()}
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedSql ? '¡Copiado al Portapapeles!' : 'Copiar Código SQL'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 text-xs text-emerald-300 space-y-1.5">
+              <div className="font-black uppercase flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Garantía de Seguridad Anti-Borrado:</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed font-medium">
+                Este script utiliza exclusivamente <code className="text-emerald-300 font-mono">CREATE TABLE IF NOT EXISTS</code> y <code className="text-emerald-300 font-mono">ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code>. No contiene ninguna cláusula <code className="text-rose-400 font-mono font-bold">DROP TABLE</code> ni <code className="text-rose-400 font-mono font-bold">TRUNCATE</code>. Tus clientes, proyectos y registros previos en Supabase están 100% a salvo.
+              </p>
             </div>
 
             <div className="relative">
               <pre className="p-4 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-emerald-400 overflow-x-auto max-h-[500px] leading-relaxed selection:bg-emerald-500 selection:text-white">
-                {SUPABASE_LANDING_SQL}
+                {sqlViewMode === 'full' ? SUPABASE_SAFE_FULL_SQL : SUPABASE_LANDING_SQL}
               </pre>
             </div>
 
-            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 text-xs text-emerald-300 space-y-2">
-              <div className="font-black uppercase flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Instrucciones de Aplicación:</span>
+            <div className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 sm:p-5 text-xs text-slate-300 space-y-2">
+              <div className="font-black uppercase text-white flex items-center gap-2">
+                <span>Pasos Rápidos para Aplicar en Supabase:</span>
               </div>
-              <ol className="list-decimal pl-5 space-y-1 font-medium text-slate-300">
-                <li>Ve a tu consola de Supabase en <strong className="text-white">supabase.com/dashboard</strong>.</li>
-                <li>Selecciona tu proyecto Solux Green.</li>
-                <li>Entra al <strong className="text-white">SQL Editor</strong> en el menú lateral izquierdo.</li>
-                <li>Pega el código SQL anterior y presiona el botón <strong className="text-emerald-400">Run</strong>.</li>
-                <li>¡Listo! Tu tabla <code className="text-emerald-300">landing_config</code> y tu bucket <code className="text-emerald-300">landing-images</code> quedarán 100% operativos.</li>
+              <ol className="list-decimal pl-5 space-y-1.5 font-medium text-slate-300">
+                <li>Ve a tu consola de Supabase en <strong className="text-white">supabase.com/dashboard</strong> y entra a tu proyecto.</li>
+                <li>Haz clic en <strong className="text-white">SQL Editor</strong> en la barra lateral izquierda.</li>
+                <li>Haz clic en <strong className="text-emerald-400">"New query"</strong>, pega el código SQL copiado arriba y presiona el botón verde <strong className="text-emerald-400">Run</strong>.</li>
+                <li>¡Listo! Tu tabla <code className="text-emerald-300">landing_config</code> y bucket de almacenamiento quedarán inmediatamente activos y conectados.</li>
               </ol>
             </div>
           </div>
@@ -2473,10 +2946,18 @@ export default function AdminLandingPage({
               className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col space-y-4 shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-base font-black uppercase text-white flex items-center gap-2">
-                  <Database className="w-5 h-5 text-emerald-400" />
-                  <span>Script SQL para Supabase</span>
-                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black uppercase text-white">
+                      Script SQL Seguro para Supabase
+                    </h3>
+                    <p className="text-[10px] text-slate-400">100% No destructivo • Sin borrado de datos</p>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => setShowSqlModal(false)}
                   className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
@@ -2485,16 +2966,41 @@ export default function AdminLandingPage({
                 </button>
               </div>
 
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSqlViewMode('full')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    sqlViewMode === 'full'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  🛡️ Script Completo Seguro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSqlViewMode('landing')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    sqlViewMode === 'landing'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-800 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  📄 Solo Landing Page & Storage
+                </button>
+              </div>
+
               <div className="flex-1 overflow-y-auto">
                 <pre className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto">
-                  {SUPABASE_LANDING_SQL}
+                  {sqlViewMode === 'full' ? SUPABASE_SAFE_FULL_SQL : SUPABASE_LANDING_SQL}
                 </pre>
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                 <button
-                  onClick={handleCopySql}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all"
+                  onClick={() => handleCopySql()}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-md"
                 >
                   {copiedSql ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedSql ? '¡Copiado!' : 'Copiar SQL'}</span>

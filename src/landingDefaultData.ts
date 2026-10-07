@@ -255,6 +255,8 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
       iconName: 'Zap'
     }
   ],
+  processBtnText: 'Iniciar Ahora: Enviar Recibo de Luz',
+  processBtnLink: '#contacto',
 
   // 6. Sección de Interacción Directa (WhatsApp Card)
   whatsappCardTitle: '¿Cuánto puedes ahorrar con tu techo? Descúbrelo hoy',
