@@ -6,7 +6,7 @@ import {
   ChevronUp, ExternalLink, Settings, ArrowLeft, ChevronLeft, 
   ChevronRight, Sparkles, FileText, Clock, Wrench, Cpu, 
   TrendingDown, DollarSign, Layers, Check, Camera, User, Send,
-  AlertTriangle, RotateCcw, Menu, X, LogIn
+  AlertTriangle, RotateCcw, Menu, X, LogIn, LogOut
 } from 'lucide-react';
 import { LandingConfig, LandingSlide, LandingBenefit, LandingStep, LandingFAQ, LandingStat, SolarProject } from '../types';
 import { SOLUX_LOGO_FALLBACK } from '../logoConfig';
@@ -16,6 +16,7 @@ interface LandingPageViewProps {
   config: LandingConfig;
   onNavigateToAdmin?: () => void;
   onNavigateToPortal?: () => void;
+  onExit?: () => void;
   onAddSolarProject?: (project: SolarProject) => void;
   soluxConfig?: any;
   currentUser?: any;
@@ -25,6 +26,7 @@ export default function LandingPageView({
   config,
   onNavigateToAdmin,
   onNavigateToPortal,
+  onExit,
   onAddSolarProject,
   soluxConfig,
   currentUser
@@ -298,6 +300,16 @@ export default function LandingPageView({
                   <span>CMS Landing</span>
                 </button>
               )}
+              {onExit && (
+                <button
+                  onClick={onExit}
+                  className="px-2 py-1 bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border border-slate-700 hover:border-rose-900/40"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut className="w-3 h-3 text-rose-400" />
+                  <span className="hidden sm:inline">Salir</span>
+                </button>
+              )}
             </>
           ) : (
             /* Final user: only see button to access the system with credentials */
@@ -367,17 +379,31 @@ export default function LandingPageView({
             )}
 
             {/* Botón Directo: Cotizar por WhatsApp */}
-            <a
-              href={getCleanWhatsappUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
-              className="px-3.5 sm:px-5 py-2 sm:py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4 fill-white shrink-0" />
-              <span className="hidden sm:inline">{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
-              <span className="sm:hidden">WhatsApp</span>
-            </a>
+            {(() => {
+              const targetUrl = config.headerCtaLink || getCleanWhatsappUrl();
+              const isAnchor = targetUrl.startsWith('#');
+              return (
+                <a
+                  href={targetUrl}
+                  target={isAnchor ? undefined : "_blank"}
+                  rel={isAnchor ? undefined : "noopener noreferrer"}
+                  onClick={(e) => {
+                    if (isAnchor) {
+                      e.preventDefault();
+                      const targetId = targetUrl.replace('#', '');
+                      const el = document.getElementById(targetId) || document.querySelector(targetUrl);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+                  className="px-3.5 sm:px-5 py-2 sm:py-2.5 text-white rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wide flex items-center gap-2 shadow-md hover:brightness-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4 fill-white shrink-0" />
+                  <span className="hidden sm:inline">{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
+                  <span className="sm:hidden">WhatsApp</span>
+                </a>
+              );
+            })()}
 
             {/* Botón Hamburguesa Activo para Tablet y Móvil (lg:hidden) */}
             <button
@@ -447,17 +473,31 @@ export default function LandingPageView({
                     </button>
                   )}
 
-                  <a
-                    href={getCleanWhatsappUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
-                    className="flex-1 py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-98"
-                  >
-                    <MessageSquare className="w-4 h-4 fill-white" />
-                    <span>{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
-                  </a>
+                  {(() => {
+                    const targetUrl = config.headerCtaLink || getCleanWhatsappUrl();
+                    const isAnchor = targetUrl.startsWith('#');
+                    return (
+                      <a
+                        href={targetUrl}
+                        target={isAnchor ? undefined : "_blank"}
+                        rel={isAnchor ? undefined : "noopener noreferrer"}
+                        onClick={(e) => {
+                          setIsMobileMenuOpen(false);
+                          if (isAnchor) {
+                            e.preventDefault();
+                            const targetId = targetUrl.replace('#', '');
+                            const el = document.getElementById(targetId) || document.querySelector(targetUrl);
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+                        className="flex-1 py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-98"
+                      >
+                        <MessageSquare className="w-4 h-4 fill-white" />
+                        <span>{config.headerCtaText || 'Cotizar por WhatsApp'}</span>
+                      </a>
+                    );
+                  })()}
                 </div>
 
                 {/* Información de contacto */}
@@ -833,18 +873,31 @@ export default function LandingPageView({
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="#contacto"
-              onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById('contacto') || document.querySelector('#contacto');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
-              className="w-full sm:w-auto px-10 py-5 text-white font-black text-base sm:text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
-            >
-              <span>{config.whatsappCardBtnText || '📲 Enviar mi recibo'}</span>
-            </a>
+            {(() => {
+              const defaultWaUrl = getCleanWhatsappUrl('Hola Solux Green, te comparto la foto de mi recibo de luz más reciente para mi simulación solar.');
+              const targetUrl = config.whatsappCardBtnLink || defaultWaUrl;
+              const isAnchor = targetUrl.startsWith('#');
+              return (
+                <a
+                  href={targetUrl}
+                  target={isAnchor ? undefined : "_blank"}
+                  rel={isAnchor ? undefined : "noopener noreferrer"}
+                  onClick={(e) => {
+                    if (isAnchor) {
+                      e.preventDefault();
+                      const targetId = targetUrl.replace('#', '');
+                      const el = document.getElementById(targetId) || document.querySelector(targetUrl);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  style={{ backgroundColor: config.styles?.whatsappBtnColor || '#25D366' }}
+                  className="w-full sm:w-auto px-10 py-5 text-white font-black text-base sm:text-lg uppercase tracking-wider rounded-2xl shadow-2xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  <MessageSquare className="w-5 h-5 fill-white shrink-0" />
+                  <span>{config.whatsappCardBtnText || '📲 Enviar mi recibo por WhatsApp'}</span>
+                </a>
+              );
+            })()}
           </div>
 
           <p className="text-xs text-emerald-200/80 font-bold uppercase tracking-wider">

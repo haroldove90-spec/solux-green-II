@@ -846,6 +846,118 @@ export default function AdminLandingPage({
                 })}
               </div>
 
+              {/* BOTÓN DEL ENCABEZADO (HEADER): COTIZAR POR WHATSAPP */}
+              <div className="bg-slate-950/90 border-2 border-emerald-500/40 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <MessageSquare className="w-4 h-4 fill-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black uppercase text-white tracking-wide">
+                        Botón del Encabezado (Header): "Cotizar por WhatsApp"
+                      </h3>
+                      <p className="text-[11px] text-slate-400">
+                        Edita el botón verde visible en la barra superior de la Landing Page.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-800/80 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                    Barra Superior (Header)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                      Texto del Botón en el Header
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.headerCtaText || ''}
+                      onChange={(e) => handleChange('headerCtaText', e.target.value)}
+                      placeholder="Cotizar por WhatsApp"
+                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                        Enlace o Destino del Botón (Header)
+                      </label>
+                      <span className="text-[10px] text-emerald-400 font-mono">
+                        {formData.headerCtaLink?.startsWith('#') ? '📍 Desplazamiento' : '🌐 Enlace web'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.headerCtaLink || ''}
+                      onChange={(e) => handleChange('headerCtaLink', e.target.value)}
+                      placeholder="https://wa.me/... o #contacto"
+                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Botones de Selección Rápida para el Header */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                    Atajos Rápidos para el Header:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { 
+                        label: '💬 WhatsApp Cotización General', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}` 
+                      },
+                      { 
+                        label: '📋 #contacto (Ir al Formulario y Cotizador)', 
+                        url: '#contacto' 
+                      },
+                      { 
+                        label: '🏢 WhatsApp Comercial / Negocios', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, solicito información y cotización comercial para mi empresa.')}` 
+                      },
+                      { 
+                        label: '🤝 WhatsApp Asesor de Enlace', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero ser Asesor de Enlace y solicito informes')}` 
+                      }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => handleChange('headerCtaLink', preset.url)}
+                        className={`text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg cursor-pointer transition-all border ${
+                          formData.headerCtaLink === preset.url
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vista previa del botón del Header */}
+                <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Vista Previa:</span>
+                    <div
+                      style={{ backgroundColor: formData.styles?.whatsappBtnColor || '#25D366' }}
+                      className="px-4 py-2 text-white rounded-xl text-xs font-black uppercase tracking-wide flex items-center gap-2 shadow select-none"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 fill-white shrink-0" />
+                      <span>{formData.headerCtaText || 'Cotizar por WhatsApp'}</span>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate max-w-sm">
+                    Destino: <span className="text-emerald-400 font-bold">{formData.headerCtaLink || `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}...`}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Save & Actions Bottom Banner */}
               <div className="bg-slate-950 p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -1473,6 +1585,118 @@ export default function AdminLandingPage({
                 />
               </div>
             </div>
+
+            {/* BOTÓN DESTACADO DEL ENCABEZADO (HEADER): COTIZAR POR WHATSAPP */}
+            <div className="bg-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-5 sm:p-6 space-y-4 shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <MessageSquare className="w-5 h-5 fill-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black uppercase text-white tracking-wide">
+                      Botón del Encabezado (Header): "Cotizar por WhatsApp"
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Personaliza el texto y el enlace directo (URL / WhatsApp / Sección) del botón destacado de la barra superior.
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-800/80 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                  Barra Superior (Header)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                    Texto del Botón en el Header
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.headerCtaText || ''}
+                    onChange={(e) => handleChange('headerCtaText', e.target.value)}
+                    placeholder="Cotizar por WhatsApp"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-300">
+                      Enlace o Destino del Botón (Header)
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono">
+                      {formData.headerCtaLink?.startsWith('#') ? '📍 Desplazamiento' : '🌐 Enlace web'}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.headerCtaLink || ''}
+                    onChange={(e) => handleChange('headerCtaLink', e.target.value)}
+                    placeholder="https://wa.me/... o #contacto"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Botones de Selección Rápida para el Header */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                  Atajos Rápidos para el Header:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { 
+                      label: '💬 WhatsApp Cotización General', 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}` 
+                    },
+                    { 
+                      label: '📋 #contacto (Ir al Formulario y Cotizador)', 
+                      url: '#contacto' 
+                    },
+                    { 
+                      label: '🏢 WhatsApp Comercial / Negocios', 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, solicito información y cotización comercial para mi empresa.')}` 
+                    },
+                    { 
+                      label: '🤝 WhatsApp Asesor de Enlace', 
+                      url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero ser Asesor de Enlace y solicito informes')}` 
+                    }
+                  ].map(preset => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleChange('headerCtaLink', preset.url)}
+                      className={`text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg cursor-pointer transition-all border ${
+                        formData.headerCtaLink === preset.url
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                          : 'bg-slate-950 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vista previa del botón del Header */}
+              <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase text-slate-400">Vista Previa:</span>
+                  <div
+                    style={{ backgroundColor: formData.styles?.whatsappBtnColor || '#25D366' }}
+                    className="px-4 py-2 text-white rounded-xl text-xs font-black uppercase tracking-wide flex items-center gap-2 shadow select-none"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 fill-white shrink-0" />
+                    <span>{formData.headerCtaText || 'Cotizar por WhatsApp'}</span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono truncate max-w-sm">
+                  Destino: <span className="text-emerald-400 font-bold">{formData.headerCtaLink || `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}...`}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1756,6 +1980,89 @@ export default function AdminLandingPage({
                   placeholder="📲 Enviar mi recibo por WhatsApp"
                   className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm font-black text-white focus:outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              {/* Enlace o Destino del Botón (Link / URL) */}
+              <div className="space-y-2 pt-2 border-t border-slate-700/80">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Enlace o Destino del Botón (Link / URL)</span>
+                  </label>
+                  <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">
+                    {formData.whatsappCardBtnLink?.startsWith('#') ? '📍 Desplazamiento interno' : '🌐 Enlace web / WhatsApp'}
+                  </span>
+                </div>
+                
+                <input
+                  type="text"
+                  value={formData.whatsappCardBtnLink || ''}
+                  onChange={(e) => handleChange('whatsappCardBtnLink', e.target.value)}
+                  placeholder="https://wa.me/5212293233633?text=... o #contacto"
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500"
+                />
+                
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Coloca un enlace directo a tu WhatsApp oficial o usa <code className="text-emerald-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono text-[10px]">#contacto</code> para que al hacer clic se desplace suavemente hacia el formulario de cotización.
+                </p>
+
+                {/* Botones de Selección Rápida */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                    Atajos y Enlaces Rápidos Recomendados:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { 
+                        label: '💬 WhatsApp (Envío de foto de recibo CFE)', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, te comparto la foto de mi recibo de luz más reciente para mi simulación solar.')}`
+                      },
+                      { 
+                        label: '📲 WhatsApp Directo General', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent(formData.defaultWhatsappMessage || 'Hola Solux Green, quiero cotizar un sistema de paneles solares')}`
+                      },
+                      { 
+                        label: '📋 #contacto (Ir al Formulario y Cotizador)', 
+                        url: '#contacto' 
+                      },
+                      { 
+                        label: '🏢 WhatsApp para Empresas y Negocios', 
+                        url: `https://wa.me/${(formData.contactWhatsapp || '2293233633').replace(/\D/g, '')}?text=${encodeURIComponent('Hola Solux Green, quiero cotizar un sistema solar para mi empresa o negocio.')}` 
+                      }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => handleChange('whatsappCardBtnLink', preset.url)}
+                        className={`text-[9px] font-extrabold px-2.5 py-1.5 rounded-lg cursor-pointer transition-all border ${
+                          formData.whatsappCardBtnLink === preset.url
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Vista Previa del Botón de la Tarjeta */}
+                <div className="mt-4 p-4 bg-slate-900/90 rounded-2xl border border-slate-700/80 text-center space-y-2">
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 block">
+                    Vista Previa del Botón de la Tarjeta:
+                  </span>
+                  <div className="flex justify-center">
+                    <div 
+                      style={{ backgroundColor: formData.styles?.whatsappBtnColor || '#25D366' }}
+                      className="px-8 py-3.5 rounded-xl text-white font-black text-sm uppercase tracking-wider shadow-lg flex items-center gap-2 select-none"
+                    >
+                      <span>{formData.whatsappCardBtnText || '📲 Enviar mi recibo por WhatsApp'}</span>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate max-w-md mx-auto">
+                    Destino: <span className="text-emerald-400 font-bold">{formData.whatsappCardBtnLink || '#contacto'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

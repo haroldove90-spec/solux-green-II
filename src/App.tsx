@@ -1204,6 +1204,7 @@ function App() {
         const u = JSON.parse(savedUserStr);
         if (u && u.role) {
           if (u.role === 'admin') return 'admin';
+          if (u.role === 'landingadmin') return 'landingadmin';
           if (u.role === 'comercial') return 'comercial';
           if (u.role === 'enlace') return 'enlace';
           if (u.role === 'partner') return 'tech';
@@ -1574,19 +1575,13 @@ function App() {
     
     if (foundUser) {
       const cleanRole = sanitizeUserRole(foundUser.role);
-      let targetRole: 'admin' | 'comercial' | 'tech' | 'enlace' | 'client' | null = null;
+      let targetRole: 'admin' | 'landingadmin' | 'comercial' | 'tech' | 'enlace' | 'client' | null = null;
       if (cleanRole === 'admin') targetRole = 'admin';
+      else if (cleanRole === 'landingadmin') targetRole = 'landingadmin';
       else if (cleanRole === 'comercial') targetRole = 'comercial';
       else if (cleanRole === 'enlace') targetRole = 'enlace';
       else if (cleanRole === 'partner') targetRole = 'tech';
       else if (cleanRole === 'client') targetRole = 'client';
-      else if (cleanRole === 'partner') targetRole = 'tech';
-      else if (cleanRole === 'client') targetRole = 'client';
-
-      // Override role if logging in with explicit active role card selection
-      if (!targetRole && selectedRoleFilter) {
-        targetRole = selectedRoleFilter;
-      }
 
       if (targetRole) {
         const userWithCleanRole = { ...foundUser, role: cleanRole === 'partner' ? 'partner' : targetRole === 'tech' ? 'partner' : cleanRole };
@@ -1599,7 +1594,7 @@ function App() {
         setLoginPassword('');
         setLoginError('');
       } else {
-        setLoginError('Rol de usuario desconocido.');
+        setLoginError('Rol de usuario desconocido o no autorizado.');
       }
     } else {
       setLoginError('Nombre de usuario, correo o contraseña incorrectos.');
@@ -2461,25 +2456,23 @@ function App() {
   }
 
   if (activeRole === 'comercial') {
-    if (!currentUser) {
+    const canAccessComercial = currentUser?.role === 'comercial' || currentUser?.role === 'admin';
+    if (!currentUser || !canAccessComercial) {
       return (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
           <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-2xl mx-auto">
               🔒
             </div>
-            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <h2 className="text-xl font-black">Acceso Restringido a Asesor Comercial</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Por favor inicia sesión con tu usuario y contraseña de Asesor Verde registrado.
+              El panel de Asesor Verde requiere una cuenta autorizada con rol comercial o Administrador General.
             </p>
             <button
-              onClick={() => {
-                setSelectedRoleFilter('comercial');
-                setActiveRole('login');
-              }}
+              onClick={() => setActiveRole('login')}
               className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
-              Iniciar Sesión como Asesor Verde
+              Iniciar Sesión
             </button>
             <button
               onClick={() => setActiveRole('landingpage')}
@@ -2520,25 +2513,23 @@ function App() {
   }
 
   if (activeRole === 'tech') {
-    if (!currentUser) {
+    const canAccessTech = currentUser?.role === 'partner' || currentUser?.role === 'tech' || currentUser?.role === 'admin';
+    if (!currentUser || !canAccessTech) {
       return (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
           <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-2xl mx-auto">
               🔒
             </div>
-            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <h2 className="text-xl font-black">Acceso Restringido a Partner Técnico</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Por favor inicia sesión con tu usuario y contraseña de Partner Técnico registrado.
+              El panel de Partner de Instalaciones requiere una cuenta autorizada de técnico instalador o Administrador General.
             </p>
             <button
-              onClick={() => {
-                setSelectedRoleFilter('tech');
-                setActiveRole('login');
-              }}
+              onClick={() => setActiveRole('login')}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
-              Iniciar Sesión como Partner
+              Iniciar Sesión
             </button>
             <button
               onClick={() => setActiveRole('landingpage')}
@@ -2575,25 +2566,23 @@ function App() {
   }
 
   if (activeRole === 'enlace') {
-    if (!currentUser) {
+    const canAccessEnlace = currentUser?.role === 'enlace' || currentUser?.role === 'admin';
+    if (!currentUser || !canAccessEnlace) {
       return (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
           <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-2xl mx-auto">
               🔒
             </div>
-            <h2 className="text-xl font-black">Sesión Requerida</h2>
+            <h2 className="text-xl font-black">Acceso Restringido a Asesor de Enlace</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Por favor inicia sesión con tu usuario y contraseña de Asesor de Enlace registrado.
+              El panel de Asesor de Enlace requiere una cuenta autorizada con rol enlace o Administrador General.
             </p>
             <button
-              onClick={() => {
-                setSelectedRoleFilter('enlace');
-                setActiveRole('login');
-              }}
+              onClick={() => setActiveRole('login')}
               className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
-              Iniciar Sesión como Asesor de Enlace
+              Iniciar Sesión
             </button>
             <button
               onClick={() => setActiveRole('landingpage')}
@@ -2635,7 +2624,8 @@ function App() {
   }
 
   if (activeRole === 'client') {
-    if (!currentUser) {
+    const canAccessClient = currentUser?.role === 'client' || currentUser?.role === 'admin';
+    if (!currentUser || !canAccessClient) {
       return (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center font-sans">
           <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
@@ -2647,10 +2637,7 @@ function App() {
               Ingresa con tus credenciales de cliente para consultar tu propuesta solar, estatus y documentos.
             </p>
             <button
-              onClick={() => {
-                setSelectedRoleFilter('client');
-                setActiveRole('login');
-              }}
+              onClick={() => setActiveRole('login')}
               className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
               Acceder como Cliente
@@ -2695,38 +2682,56 @@ function App() {
         <LandingPageView 
           config={landingConfig}
           onNavigateToAdmin={() => {
-            if (currentUser?.role === 'admin') {
+            if (currentUser?.role === 'admin' || currentUser?.role === 'landingadmin') {
               setActiveRole('landingadmin');
             } else {
               setActiveRole('login');
             }
           }}
-          onNavigateToPortal={() => setActiveRole('login')}
+          onNavigateToPortal={() => {
+            if (currentUser?.role === 'admin') {
+              setActiveRole('admin');
+            } else if (currentUser?.role === 'landingadmin') {
+              setActiveRole('landingadmin');
+            } else if (currentUser?.role === 'comercial') {
+              setActiveRole('comercial');
+            } else if (currentUser?.role === 'partner' || currentUser?.role === 'tech') {
+              setActiveRole('tech');
+            } else if (currentUser?.role === 'enlace') {
+              setActiveRole('enlace');
+            } else if (currentUser?.role === 'client') {
+              setActiveRole('client');
+            } else {
+              setActiveRole('login');
+            }
+          }}
           onAddSolarProject={handleAddSolarProject}
           soluxConfig={soluxConfig}
           currentUser={currentUser}
+          onExit={handleExitSession}
         />
       </div>
     );
   }
 
   if (activeRole === 'landingadmin') {
-    if (currentUser?.role !== 'admin') {
+    const isLandingAdmin = currentUser?.role === 'admin' || currentUser?.role === 'landingadmin';
+    if (!currentUser || !isLandingAdmin) {
       return (
         <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center">
           <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-2xl mx-auto">
               🔒
             </div>
-            <h2 className="text-xl font-black">Acceso Restringido a Administrador</h2>
+            <h2 className="text-xl font-black">Acceso Restringido a Administrador de Landing</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              El panel de administración de la landing page requiere una sesión activa con credenciales de Administrador General.
+              El panel de administración de la landing page requiere una sesión activa con el rol de Administrador Landingpage o Administrador General.
             </p>
             <button
               onClick={() => setActiveRole('login')}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
             >
-              Iniciar Sesión como Administrador
+              Iniciar Sesión
             </button>
             <button
               onClick={() => setActiveRole('landingpage')}
@@ -2746,7 +2751,15 @@ function App() {
           config={landingConfig}
           onSaveConfig={handleUpdateLandingConfig}
           onNavigateToLanding={() => setActiveRole('landingpage')}
-          onNavigateToPortal={() => setActiveRole('login')}
+          onNavigateToPortal={() => {
+            if (currentUser?.role === 'landingadmin') {
+              handleExitSession();
+            } else {
+              setActiveRole('admin');
+            }
+          }}
+          onExit={handleExitSession}
+          currentUser={currentUser}
           isOfflineMode={isOfflineMode}
         />
       </div>
@@ -2867,244 +2880,103 @@ function App() {
               />
             </div>
 
-            {/* Portal Banner / Info */}
+            {/* Private Access Banner */}
             <div className="text-center space-y-1.5 px-2">
-              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-3 py-0.5 sm:py-1 rounded-full text-emerald-700">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest">Portal Multi-Rol Solux Green</span>
+              <div className="inline-flex items-center gap-1.5 bg-slate-900 text-emerald-400 px-3.5 py-1 rounded-full shadow-xs border border-slate-800">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Sistema Privado Solux Green</span>
               </div>
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">
-                Selecciona tu Rol de Operación
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">
+                Acceso al Sistema
               </h2>
               <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider max-w-md mx-auto">
-                Accede a tu panel o regístrate para cada tipo de usuario
+                Ingresa con tu usuario y contraseña. El sistema detectará automáticamente tu rol asignado.
               </p>
-            </div>
-
-            {/* Direct Landing Page Navigation */}
-            <div className="w-full">
-              <button
-                type="button"
-                onClick={() => setActiveRole('landingpage')}
-                className="w-full p-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl shadow-xs flex items-center justify-between transition-all cursor-pointer group active:scale-98"
-              >
-                <div className="flex items-center gap-2.5 text-left">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <Globe className="w-4 h-4 text-emerald-600" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider block text-slate-800">Ver Página de Inicio (Landing Page)</span>
-                    <span className="text-[9px] text-slate-400 font-medium block">Página comercial pública para clientes y cotizaciones</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform shrink-0" />
-              </button>
-            </div>
-
-            {/* --- ROLE SELECTOR TABS --- */}
-            <div className="w-full grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleFilter('admin');
-                  setLoginError('');
-                  setRegError('');
-                }}
-                className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl transition-all cursor-pointer ${
-                  selectedRoleFilter === 'admin'
-                    ? 'bg-white text-violet-700 shadow-md border border-violet-100 font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-bold'
-                }`}
-              >
-                <Crown className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 ${selectedRoleFilter === 'admin' ? 'text-violet-600' : 'text-slate-400'}`} />
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-tight text-center leading-tight">Admin</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleFilter('comercial');
-                  setLoginError('');
-                  setRegError('');
-                }}
-                className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl transition-all cursor-pointer ${
-                  selectedRoleFilter === 'comercial'
-                    ? 'bg-white text-orange-700 shadow-md border border-orange-100 font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-bold'
-                }`}
-              >
-                <TrendingUp className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 ${selectedRoleFilter === 'comercial' ? 'text-orange-600' : 'text-slate-400'}`} />
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-tight text-center leading-tight">Asesor Verde</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleFilter('tech');
-                  setLoginError('');
-                  setRegError('');
-                }}
-                className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl transition-all cursor-pointer ${
-                  selectedRoleFilter === 'tech'
-                    ? 'bg-white text-emerald-700 shadow-md border border-emerald-100 font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-bold'
-                }`}
-              >
-                <Wrench className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 ${selectedRoleFilter === 'tech' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-tight text-center leading-tight">Partner</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleFilter('enlace');
-                  setLoginError('');
-                  setRegError('');
-                }}
-                className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl transition-all cursor-pointer ${
-                  selectedRoleFilter === 'enlace'
-                    ? 'bg-white text-rose-700 shadow-md border border-rose-100 font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-bold'
-                }`}
-              >
-                <Handshake className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 ${selectedRoleFilter === 'enlace' ? 'text-rose-600' : 'text-slate-400'}`} />
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-tight text-center leading-tight">Enlace</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRoleFilter('client');
-                  setLoginError('');
-                  setRegError('');
-                }}
-                className={`col-span-2 sm:col-span-1 flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl transition-all cursor-pointer ${
-                  selectedRoleFilter === 'client'
-                    ? 'bg-white text-sky-700 shadow-md border border-sky-100 font-extrabold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 font-bold'
-                }`}
-              >
-                <User className={`w-4 h-4 sm:w-5 sm:h-5 mb-1 ${selectedRoleFilter === 'client' ? 'text-sky-600' : 'text-slate-400'}`} />
-                <span className="text-[9px] sm:text-[10px] uppercase tracking-tight text-center leading-tight">Cliente</span>
-              </button>
             </div>
 
             {/* Main Form Container */}
             <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 w-full shadow-xl shadow-slate-100 relative overflow-hidden space-y-5">
               
-              {/* Login / Register Toggle Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-2">
-                  {selectedRoleFilter === 'admin' && <Crown className="w-5 h-5 text-violet-600 shrink-0" />}
-                  {selectedRoleFilter === 'comercial' && <TrendingUp className="w-5 h-5 text-orange-600 shrink-0" />}
-                  {selectedRoleFilter === 'tech' && <Wrench className="w-5 h-5 text-emerald-600 shrink-0" />}
-                  {selectedRoleFilter === 'enlace' && <Handshake className="w-5 h-5 text-rose-600 shrink-0" />}
-                  {selectedRoleFilter === 'client' && <User className="w-5 h-5 text-sky-600 shrink-0" />}
-                  
-                  <div>
-                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 block">Rol Seleccionado</span>
-                    <h3 className="text-xs sm:text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">
-                      {selectedRoleFilter === 'admin' && 'Administrador General'}
-                      {selectedRoleFilter === 'comercial' && 'Asesor Verde (Comercial)'}
-                      {selectedRoleFilter === 'tech' && 'Partner de Instalaciones'}
-                      {selectedRoleFilter === 'enlace' && 'Asesor de Enlace (Referidos)'}
-                      {selectedRoleFilter === 'client' && 'Cliente Solar / Final'}
-                    </h3>
+              {/* Form Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600 shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
-                </div>
-
-                <div className="bg-slate-100 p-1 rounded-xl flex gap-1 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => setHomeActiveTab('login')}
-                    className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                      homeActiveTab === 'login'
-                        ? 'bg-slate-900 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <LogIn className="w-3.5 h-3.5" /> Iniciar Sesión
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setHomeActiveTab('register')}
-                    className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                      homeActiveTab === 'register'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <UserPlus className="w-3.5 h-3.5" /> Registrarse
-                  </button>
+                  <div>
+                    <h3 className="text-xs sm:text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">
+                      Inicio de Sesión
+                    </h3>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">
+                      Detección automática de perfil y permisos autorizados
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* --- LOGIN FORM --- */}
-              {homeActiveTab === 'login' && (
-                <form onSubmit={handleLoginSubmit} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                      Nombre de Usuario o Correo Electrónico
+              <form onSubmit={handleLoginSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                    Nombre de Usuario o Correo Electrónico
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
+                      placeholder="Ingresa tu usuario o correo electrónico"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                      Contraseña
                     </label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        value={loginUsername}
-                        onChange={(e) => setLoginUsername(e.target.value)}
-                        placeholder={`Ej. ${selectedRoleFilter === 'admin' ? 'admin' : selectedRoleFilter === 'comercial' ? 'verde1' : selectedRoleFilter === 'tech' ? 'partner1' : selectedRoleFilter === 'enlace' ? 'enlace1' : 'cliente_demo'}`}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                        required
-                      />
-                    </div>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                        Contraseña
-                      </label>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        placeholder="••••••••••••"
-                        className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                        title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {loginError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-[10px] font-bold text-rose-600 uppercase tracking-wide text-center"
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                     >
-                      ⚠️ {loginError}
-                    </motion.div>
-                  )}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 bg-slate-900 hover:bg-emerald-600 text-white font-black uppercase text-xs tracking-wider rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                {loginError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-[10px] font-bold text-rose-600 uppercase tracking-wide text-center"
                   >
-                    <ShieldCheck className="w-4 h-4" /> Ingresar como {selectedRoleFilter.toUpperCase()}
-                  </button>
-                </form>
-              )}
+                    ⚠️ {loginError}
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-slate-900 hover:bg-emerald-600 text-white font-black uppercase text-xs tracking-wider rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <LogIn className="w-4 h-4 text-emerald-400" /> Iniciar Sesión en el Sistema
+                </button>
+              </form>
 
               {/* --- REGISTRATION FORM --- */}
               {homeActiveTab === 'register' && (
@@ -3363,15 +3235,6 @@ function App() {
                 >
                   <Globe className="w-3.5 h-3.5 text-emerald-500" />
                   <span>Ver Landing Page</span>
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => setActiveRole('landingadmin')}
-                  className="hover:text-violet-600 transition-colors cursor-pointer font-bold flex items-center gap-1"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-violet-500" />
-                  <span>Admin Landing</span>
                 </button>
               </div>
             </div>

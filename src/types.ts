@@ -472,6 +472,7 @@ export interface LandingConfig {
   whatsappCardTitle: string;
   whatsappCardDescription: string;
   whatsappCardBtnText: string;
+  whatsappCardBtnLink?: string;
   whatsappCardImageUrl?: string;
 
   // FAQs

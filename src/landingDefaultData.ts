@@ -259,7 +259,8 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
   // 6. Sección de Interacción Directa (WhatsApp Card)
   whatsappCardTitle: '¿Cuánto puedes ahorrar con tu techo? Descúbrelo hoy',
   whatsappCardDescription: 'Tómale una foto a tu recibo de luz más reciente y envíanosla. Haremos una simulación sin ningún compromiso.',
-  whatsappCardBtnText: '📲 Enviar mi recibo',
+  whatsappCardBtnText: '📲 Enviar mi recibo por WhatsApp',
+  whatsappCardBtnLink: 'https://wa.me/5212293233633?text=Hola%20Solux%20Green,%20adjunto%20la%20foto%20de%20mi%20recibo%20de%20luz%20para%20mi%20simulaci%C3%B3n%20solar',
   whatsappCardImageUrl: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1200&q=80',
 
   // 7. Preguntas Frecuentes (FAQ)
